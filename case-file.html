@@ -470,7 +470,7 @@
       <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">DESCRAMBLER MODULE</div>
-          <div class="scope"><div class="signal-label">WAVEFORM — ENCRYPTED</div><canvas id="scopeCanvas"></canvas></div>
+          <div class="scope"><canvas id="scopeCanvas"></canvas></div>
           <div class="hint">ENTER DESCRAMBLE KEY</div>
           <div class="wheels" id="wheels"></div>
           <button class="try-btn" id="tryBtn">ATTEMPT DESCRAMBLE</button>
@@ -582,8 +582,10 @@
   function drawScope(){
     const canvas = document.getElementById('scopeCanvas');
     if(!scopeRunning || !canvas) return;
+    if(canvas.width === 0 || canvas.height === 0) resizeScopeCanvas();
     const ctx = canvas.getContext('2d');
     const w = canvas.width, h = canvas.height;
+    if(w === 0 || h === 0){ requestAnimationFrame(drawScope); return; }
     ctx.fillStyle = '#020402';
     ctx.fillRect(0,0,w,h);
 
