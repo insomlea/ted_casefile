@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Precinct Evidence System — Case #4471</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080b09; --panel:#10160f; --panel-2:#141b13; --line:#243024;
+    --green:#4dff9e; --green-dim:#2b6b4c; --green-faint:#1f3a2a;
+    --amber:#e2a542; --red:#c1443a; --paper:#c9d4c9; --muted:#6e8377;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); min-height:100vh; display:flex; justify-content:center;
+    padding:18px 12px 60px; font-family:'Inter',sans-serif; color:var(--paper);
+    position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 3px);
+    z-index:50; mix-blend-mode:overlay;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    z-index:49;
+  }
+  .device{width:100%; max-width:410px;}
+
+  /* ---------- shared top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  .topbar .sys{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green-dim);}
+  .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+  /* ---------- onboarding ---------- */
+  #onboard{display:none;}
+  #onboard.show{display:block;}
+  .onb-title{font-family:'VT323',monospace;font-size:32px;color:var(--green);letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
+  .onb-sub{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);margin-bottom:22px;}
+  .onb-card{background:var(--panel);border:1px solid var(--line);padding:20px 18px;}
+  .onb-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+  .onb-input{
+    width:100%; background:#020402; border:1px solid var(--green-faint); color:var(--green);
+    font-family:'IBM Plex Mono',monospace; font-size:15px; padding:12px 10px; margin-bottom:18px;
+  }
+  .onb-input:focus{outline:none;border-color:var(--green);}
+  .onb-btn{
+    width:100%; background:var(--green-faint); border:1px solid var(--green); color:var(--green);
+    font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:2px; padding:14px 0;
+    cursor:pointer; transition:background .2s;
+  }
+  .onb-btn:active{background:var(--green-dim);}
+  .onb-foot{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:14px;line-height:1.6;}
+
+  /* ---------- case file main ---------- */
+  #casefile{display:none;}
+  #casefile.show{display:block;}
+  .case-head{margin-bottom:6px;}
+  .case-num{font-family:'VT323',monospace;font-size:38px;color:var(--green);line-height:1;letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
+  .recruit-line{
+    font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--amber);
+    margin-top:4px; margin-bottom:6px;
+  }
+  .progress-line{
+    font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);
+    margin-bottom:16px;
+  }
+  .progress-line span{color:var(--green);}
+
+  /* toast */
+  .toast{
+    display:none;
+    font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;
+    color:#04140a; background:var(--green); padding:9px 12px; margin-bottom:14px;
+    box-shadow:0 0 14px rgba(77,255,158,0.5);
+  }
+  .toast.show{display:block;animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+  .tab{
+    flex:1; min-width:78px; text-align:center; padding:10px 4px;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--muted);
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .tab .t1{display:block;font-size:9px;opacity:0.75;margin-bottom:2px;}
+  .tab.locked{color:#3a4a3f;cursor:default;}
+  .tab.booked{color:var(--green);border-color:var(--green-faint);}
+  .tab.active{border-color:var(--green);background:var(--green-faint);color:var(--green);}
+  .tab .lockicon{opacity:0.6;}
+
+  .panewrap{min-height:200px;}
+  .pane{display:none;}
+  .pane.active{display:block;}
+
+  .locked-msg{
+    text-align:center; padding:50px 20px; font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px; color:var(--muted); border:1px dashed var(--green-faint); line-height:1.7;
+  }
+  .locked-msg .li{font-size:22px;display:block;margin-bottom:10px;color:var(--green-dim);}
+
+  /* ---------- evidence card (shared across panes) ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);padding:16px 16px 14px;margin-bottom:14px;position:relative;}
+  .card::before{
+    content:"SEIZED — DO NOT REMOVE";position:absolute;top:10px;right:-34px;
+    transform:rotate(90deg);transform-origin:right top;
+    font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+    color:rgba(193,68,58,0.55);border:1px solid rgba(193,68,58,0.4);padding:2px 6px;white-space:nowrap;
+  }
+  .field{margin-bottom:10px;}
+  .field:last-child{margin-bottom:0;}
+  .field .label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;}
+  .field .value{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--paper);line-height:1.5;}
+  .field .value.note{font-style:italic;color:#9fb3a4;border-left:2px solid var(--green-faint);padding-left:10px;}
+
+  .file-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel-2);border:1px solid var(--line);padding:14px 16px;margin-bottom:14px;
+    cursor:pointer;user-select:none;transition:border-color .2s;
+  }
+  .file-row:active{border-color:var(--green-dim);}
+  .file-row .fname{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--paper);}
+  .file-row .fsub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+  .lockbadge{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;padding:4px 9px;border:1px solid var(--amber);color:var(--amber);transition:all .35s;}
+  .lockbadge.open{color:var(--green);border-color:var(--green);}
+  .chev{color:var(--muted);font-size:13px;margin-left:10px;transition:transform .3s;}
+  .chev.open{transform:rotate(90deg);color:var(--green);}
+
+  .reveal{max-height:0;overflow:hidden;transition:max-height .5s ease;}
+  .reveal.open{max-height:1400px;}
+  .reveal-inner{background:var(--panel);border:1px solid var(--line);border-top:none;padding:18px 16px;margin-top:-14px;margin-bottom:14px;}
+  .ptitle{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:14px;}
+
+  /* letter */
+  .letter-wrap{display:flex;justify-content:center;margin-bottom:14px;}
+  .letter{
+    position:relative;width:260px;padding:24px 20px 26px;
+    background:radial-gradient(ellipse at 25% 15%, #ddceA0 0%, #cbb583 55%, #a68d5a 100%);
+    box-shadow:0 10px 26px rgba(0,0,0,0.5); transform:rotate(0.6deg);
+    clip-path:polygon(1.5% 0%, 100% 0.8%, 98.5% 99%, 3% 100%, 0% 62%);
+  }
+  .letter::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 88% 90%, rgba(20,10,4,0.55) 0%, rgba(20,10,4,0.25) 22%, transparent 40%),
+                radial-gradient(circle at 6% 4%, rgba(20,10,4,0.35) 0%, transparent 26%);
+    pointer-events:none;
+  }
+  .lsalut{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-bottom:8px;}
+  .lline{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.85;color:#241407;min-height:20px;display:flex;align-items:center;}
+  .lline.burnt .smear{
+    display:block;width:100%;height:14px;border-radius:2px;
+    background:linear-gradient(90deg, transparent 0%, #1c0f05 6%, #0a0502 40%, #0a0502 60%, #1c0f05 92%, transparent 100%);
+    opacity:0.92;filter:blur(0.4px);
+  }
+  .lsign{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-top:12px;text-align:right;}
+
+  /* business card */
+  .bizcard-wrap{display:flex;justify-content:center;margin-bottom:8px;}
+  .bizcard{
+    position:relative;width:280px;aspect-ratio:16/9.2;border-radius:5px;
+    background:linear-gradient(155deg, #f3ecda 0%, #eadfc4 55%, #e2d4b2 100%);
+    box-shadow:0 10px 24px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(120,95,50,0.25);
+    transform:rotate(-1deg); display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:16px; text-align:center;
+  }
+  .bizcard::before{content:"";position:absolute;inset:8px;border:1px solid rgba(90,65,35,0.35);border-radius:2px;pointer-events:none;}
+  .bc-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px;letter-spacing:3.5px;color:#2c2210;}
+  .bc-sub{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:12px;letter-spacing:1.5px;color:#5a4a2c;margin-top:4px;}
+  .bc-rule{width:56px;height:1px;background:rgba(90,65,35,0.45);margin:10px 0;}
+  .bc-addr{font-family:'Cormorant Garamond',serif;font-size:12.5px;color:#3a2e18;}
+  .bc-phone{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:15.5px;letter-spacing:2px;color:#3a2e18;margin-top:6px;}
+
+  /* descrambler */
+  .scope{position:relative;height:60px;background:#020402;border:1px solid var(--green-faint);margin-bottom:16px;overflow:hidden;}
+  .scope canvas{width:100%;height:100%;display:block;}
+  .scope .signal-label{position:absolute;top:5px;left:8px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:rgba(77,255,158,0.55);z-index:2;}
+  .meter{margin-bottom:18px;}
+  .meter-top{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;}
+  .meter-top span.val{color:var(--green);}
+  .meter-bar{height:8px;background:#020402;border:1px solid var(--green-faint);overflow:hidden;}
+  .meter-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green-dim),var(--green));transition:width .3s ease;box-shadow:0 0 8px rgba(77,255,158,0.4);}
+  .wheels{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
+  .wheel{flex:1;display:flex;flex-direction:column;align-items:center;background:#020402;border:1px solid var(--line);padding:6px 0 8px;}
+  .wheel.correct{border-color:var(--green);box-shadow:0 0 10px rgba(77,255,158,0.15) inset;}
+  .wheel button{background:none;border:none;color:var(--muted);font-size:16px;padding:8px 0;width:100%;cursor:pointer;font-family:'Share Tech Mono',monospace;transition:color .2s;}
+  .wheel button:active{color:var(--green);}
+  .wheel .digit{font-family:'VT323',monospace;font-size:38px;color:var(--green);line-height:1;text-shadow:0 0 8px rgba(77,255,158,0.45);}
+  .wheel.correct .digit{color:#eafff2;text-shadow:0 0 12px rgba(77,255,158,0.85);}
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;}
+  .result{margin-top:16px;border-top:1px dashed var(--green-faint);padding-top:16px;display:none;}
+  .result.show{display:block;}
+  .result .stamp{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green);border:1px solid var(--green);display:inline-block;padding:4px 10px;margin-bottom:12px;}
+  .result .transcript{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#eafff2;}
+  .cursor{display:inline-block;width:7px;height:14px;background:var(--green);margin-left:2px;animation:blink 1s step-start infinite;vertical-align:middle;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .footer-note{text-align:center;font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#3a4a3f;margin-top:22px;}
+  .reset-link{text-align:center;margin-top:10px;}
+  .reset-link a{font-family:'Share Tech Mono',monospace;font-size:9px;color:#3a4a3f;text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="device">
+
+  <div class="topbar">
+    <div class="sys">PRECINCT EVIDENCE SYS · v2.1</div>
+    <div class="live"><span class="dot"></span>ONLINE</div>
+  </div>
+
+  <!-- ===================== ONBOARDING ===================== -->
+  <div id="onboard">
+    <div class="onb-title">NEW RECRUIT INTAKE</div>
+    <div class="onb-sub">CASE #4471 · MARCHETTI INVESTIGATION</div>
+    <div class="onb-card">
+      <div class="onb-label">ENTER YOUR NAME TO OPEN YOUR CASE FILE</div>
+      <input type="text" id="recruitName" class="onb-input" placeholder="e.g. J. Alvarez" maxlength="24">
+      <button class="onb-btn" id="issueBtn">ISSUE BADGE &amp; OPEN FILE</button>
+      <div class="onb-foot">Your badge number will be assigned automatically. Scan evidence around the precinct to build your case as you go — items can be found in any order.</div>
+    </div>
+  </div>
+
+  <!-- ===================== CASE FILE ===================== -->
+  <div id="casefile">
+    <div class="case-head">
+      <div class="case-num">CASE #4471</div>
+    </div>
+    <div class="recruit-line" id="recruitLine"></div>
+    <div class="progress-line" id="progressLine"></div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="tabs" id="tabs"></div>
+
+    <div class="panewrap" id="panewrap"></div>
+
+    <div class="reset-link"><a id="resetLink">reset case file (testing)</a></div>
+  </div>
+
+  <div class="footer-note">EVIDENCE HANDLING PROTOCOL 12-B · UNIT 4471</div>
+</div>
+
+<script>
+(function(){
+  // ---------------- config: evidence items ----------------
+  const ITEMS = [
+    { id:'key', tag:'EXHIBIT A', label:'Business Card', locked:false },
+    { id:'ledger', tag:'ITEM 1 OF 3', label:'Letter', locked:false },
+    { id:'radio', tag:'ITEM 2 OF 3', label:'Radio', locked:false }
+    // add { id:'map', tag:'ITEM 3 OF 3', label:'Map' } here once built
+  ];
+  const TARGET_CODE = [4,7,2,8];
+  const RADIO_MESSAGE = '"...tell Sal the shipment\'s moving to the old rail spur off 5th, nine o\'clock, don\'t be late."';
+
+  // ---------------- storage helpers ----------------
+  const PROFILE_KEY = 'precinct_recruit_v1';
+  const CASE_KEY = 'precinct_case_4471_v1';
+
+  function getProfile(){
+    try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)); }catch(e){ return null; }
+  }
+  function saveProfile(p){ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+  function getCase(){
+    try{ return JSON.parse(localStorage.getItem(CASE_KEY)) || {}; }catch(e){ return {}; }
+  }
+  function saveCase(c){ localStorage.setItem(CASE_KEY, JSON.stringify(c)); }
+
+  function bookItem(id){
+    const c = getCase();
+    if(!c[id]){
+      c[id] = { bookedAt: Date.now() };
+      saveCase(c);
+      return true; // newly booked
+    }
+    return false; // already had it
+  }
+
+  // ---------------- onboarding flow ----------------
+  const onboardEl = document.getElementById('onboard');
+  const casefileEl = document.getElementById('casefile');
+  const params = new URLSearchParams(window.location.search);
+  const scannedItem = params.get('item');
+
+  function showOnboard(){
+    onboardEl.classList.add('show');
+    casefileEl.classList.remove('show');
+  }
+  function showCaseFile(){
+    onboardEl.classList.remove('show');
+    casefileEl.classList.add('show');
+  }
+
+  document.getElementById('issueBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('recruitName').value.trim();
+    if(!name) return;
+    const badge = Math.floor(1000 + Math.random()*9000);
+    saveProfile({ name, badge, created: Date.now() });
+    if(scannedItem) bookItem(scannedItem);
+    renderCaseFile(scannedItem);
+    showCaseFile();
+  });
+
+  document.getElementById('resetLink').addEventListener('click', ()=>{
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(CASE_KEY);
+    window.location.href = window.location.pathname;
+  });
+
+  // ---------------- case file rendering ----------------
+  let activeId = null;
+  let justBooked = null;
+
+  function renderCaseFile(freshlyScanned){
+    const profile = getProfile();
+    const caseData = getCase();
+
+    document.getElementById('recruitLine').textContent =
+      `DET. ${profile.name.toUpperCase()} · BADGE #${profile.badge}`;
+
+    const bookedCount = ITEMS.filter(it => caseData[it.id]).length;
+    document.getElementById('progressLine').innerHTML =
+      `EVIDENCE LOGGED: <span>${bookedCount} / ${ITEMS.length}</span>`;
+
+    // toast for newly booked item
+    const toast = document.getElementById('toast');
+    if(freshlyScanned && caseData[freshlyScanned]){
+      const item = ITEMS.find(i=>i.id===freshlyScanned);
+      if(item){
+        toast.textContent = `NEW EVIDENCE LOGGED — ${item.label.toUpperCase()}`;
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'), 3200);
+      }
+    }
+
+    // tabs
+    const tabsEl = document.getElementById('tabs');
+    tabsEl.innerHTML = '';
+    ITEMS.forEach(item=>{
+      const booked = !!caseData[item.id];
+      const tab = document.createElement('div');
+      tab.className = 'tab' + (booked ? ' booked' : ' locked');
+      tab.innerHTML = `<span class="t1">${item.tag}</span>${booked ? item.label : '<span class="lockicon">&#128274;</span> LOCKED'}`;
+      if(booked){
+        tab.addEventListener('click', ()=> setActive(item.id));
+      }
+      tab.dataset.id = item.id;
+      tabsEl.appendChild(tab);
+    });
+
+    // decide active tab
+    if(freshlyScanned && caseData[freshlyScanned]){
+      activeId = freshlyScanned;
+    } else if(!activeId || !caseData[activeId]){
+      const firstBooked = ITEMS.find(it => caseData[it.id]);
+      activeId = firstBooked ? firstBooked.id : null;
+    }
+
+    renderPanes(caseData);
+    highlightActiveTab();
+  }
+
+  function highlightActiveTab(){
+    document.querySelectorAll('.tab').forEach(t=>{
+      t.classList.toggle('active', t.dataset.id === activeId);
+    });
+  }
+
+  function setActive(id){
+    activeId = id;
+    highlightActiveTab();
+    document.querySelectorAll('.pane').forEach(p=>{
+      p.classList.toggle('active', p.dataset.id === id);
+    });
+  }
+
+  function renderPanes(caseData){
+    const wrap = document.getElementById('panewrap');
+    wrap.innerHTML = '';
+    ITEMS.forEach(item=>{
+      const pane = document.createElement('div');
+      pane.className = 'pane' + (item.id===activeId ? ' active' : '');
+      pane.dataset.id = item.id;
+      if(!caseData[item.id]){
+        pane.innerHTML = `<div class="locked-msg"><span class="li">&#128274;</span>Not yet recovered.<br>Find and scan this piece of evidence.</div>`;
+      } else {
+        pane.innerHTML = paneContent(item.id);
+      }
+      wrap.appendChild(pane);
+    });
+    // wire up interactive bits for booked panes
+    ITEMS.forEach(item=>{
+      if(caseData[item.id]) wireUpPane(item.id);
+    });
+  }
+
+  function paneContent(id){
+    if(id === 'key'){
+      return `
+      <div class="card">
+        <div class="field"><div class="label">ITEM</div><div class="value">Business card, recovered from suspect's wallet</div></div>
+        <div class="field"><div class="label">CONDITION</div><div class="value">Intact. Minor wear at corners.</div></div>
+        <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"No listing on file for this club. Probably nothing — kept it with the rest of the personal effects."</div></div>
+      </div>
+      <div class="file-row" data-toggle="key-reveal">
+        <div><div class="fname">CARD_07.JPG</div><div class="fsub">ATTACHED FILE · TAP TO VIEW</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="key-reveal">EVIDENCE</div><div class="chev" data-chev="key-reveal">&#9656;</div></div>
+      </div>
+      <div class="reveal" data-reveal="key-reveal">
+        <div class="reveal-inner">
+          <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
+          <div class="bizcard-wrap">
+            <div class="bizcard">
+              <div class="bc-name">BLACKHORSE</div>
+              <div class="bc-sub">Social Club — Members Only</div>
+              <div class="bc-rule"></div>
+              <div class="bc-addr">118 Ferry Street, Back Entrance</div>
+              <div class="bc-phone">TEL. (012) 345-6789</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    if(id === 'ledger'){
+      return `
+      <div class="card">
+        <div class="field"><div class="label">ITEM</div><div class="value">Handwritten letter, recovered from sealed evidence bag</div></div>
+        <div class="field"><div class="label">CONDITION</div><div class="value">Fire damaged. Several lines destroyed. Remainder legible.</div></div>
+        <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"Nothing in the surviving text reads as code on its own. Worth a second look before filing."</div></div>
+      </div>
+      <div class="file-row" data-toggle="ledger-reveal">
+        <div><div class="fname">LETTER_04.JPG</div><div class="fsub">ATTACHED FILE · TAP TO VIEW</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="ledger-reveal">EVIDENCE</div><div class="chev" data-chev="ledger-reveal">&#9656;</div></div>
+      </div>
+      <div class="reveal" data-reveal="ledger-reveal">
+        <div class="reveal-inner">
+          <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
+          <div class="letter-wrap">
+            <div class="letter">
+              <div class="lsalut">Frank —</div>
+              <div class="lline">Keeping this short, in case it don't reach you.</div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline">Running the numbers again like you asked.</div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline">Asked around, nobody's talked. We're clean.</div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline">Sent word ahead so they know we're coming.</div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lsign">— V.</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    if(id === 'radio'){
+      return `
+      <div class="card">
+        <div class="field"><div class="label">ITEM</div><div class="value">Two-way radio, seized from T. Marchetti residence</div></div>
+        <div class="field"><div class="label">CONDITION</div><div class="value">Powered, tuned to unidentified frequency at time of seizure</div></div>
+        <div class="field"><div class="label">SURVEILLANCE NOTE</div><div class="value note">"Frequency monitored for 11 days prior to raid. Recovered transmission archived below — audio was scrambled at source. Descrambler module required."</div></div>
+      </div>
+      <div class="file-row" data-toggle="radio-reveal">
+        <div><div class="fname">INTERCEPT_04.WAV</div><div class="fsub">ATTACHED FILE · TAP TO OPEN</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="radio-reveal">LOCKED</div><div class="chev" data-chev="radio-reveal">&#9656;</div></div>
+      </div>
+      <div class="reveal" data-reveal="radio-reveal">
+        <div class="reveal-inner">
+          <div class="ptitle">DESCRAMBLER MODULE</div>
+          <div class="scope"><div class="signal-label">SIGNAL</div><canvas id="scopeCanvas"></canvas></div>
+          <div class="meter">
+            <div class="meter-top"><span>CLARITY</span><span class="val" id="clarityVal">0%</span></div>
+            <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+          </div>
+          <div class="hint">ENTER DESCRAMBLE KEY</div>
+          <div class="wheels" id="wheels"></div>
+          <div class="result" id="radioResult">
+            <div class="stamp">DESCRAMBLE SUCCESSFUL</div>
+            <div class="transcript" id="transcript"></div>
+          </div>
+        </div>
+      </div>`;
+    }
+    return '';
+  }
+
+  function wireUpPane(id){
+    // generic reveal toggles
+    document.querySelectorAll(`[data-toggle]`).forEach(row=>{
+      if(row.dataset._wired) return;
+      row.dataset._wired = '1';
+      row.addEventListener('click', ()=>{
+        const key = row.dataset.toggle;
+        const reveal = document.querySelector(`[data-reveal="${key}"]`);
+        const badge = document.querySelector(`[data-badge="${key}"]`);
+        const chev = document.querySelector(`[data-chev="${key}"]`);
+        const isOpen = reveal.classList.toggle('open');
+        badge.classList.toggle('open', isOpen);
+        badge.textContent = isOpen ? (key==='radio-reveal' ? 'OPEN' : 'VIEWING') : (key==='radio-reveal' ? 'LOCKED' : 'EVIDENCE');
+        chev.classList.toggle('open', isOpen);
+        if(key === 'radio-reveal' && isOpen) startRadioScope();
+      });
+    });
+
+    if(id === 'radio') initRadio();
+  }
+
+  // ---------------- radio descrambler logic ----------------
+  let radioInit = false;
+  let digits = [0,0,0,0];
+  let unlocked = false;
+  let scopeRunning = false;
+  let clarityLevel = 0;
+  let audioCtx, noiseSource, filterNode, gainNode, audioStarted=false;
+
+  function initRadio(){
+    if(radioInit) return;
+    radioInit = true;
+    const wheelsEl = document.getElementById('wheels');
+    TARGET_CODE.forEach((_, i)=>{
+      const wheel = document.createElement('div');
+      wheel.className = 'wheel';
+      wheel.innerHTML = `<button class="up" data-i="${i}">&#9650;</button><div class="digit" id="digit-${i}">0</div><button class="down" data-i="${i}">&#9660;</button>`;
+      wheelsEl.appendChild(wheel);
+    });
+    wheelsEl.querySelectorAll('button.up').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),1)));
+    wheelsEl.querySelectorAll('button.down').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),-1)));
+    window.addEventListener('resize', resizeScopeCanvas);
+  }
+
+  function changeDigit(i, dir){
+    if(unlocked) return;
+    ensureAudio();
+    digits[i] = (digits[i] + dir + 10) % 10;
+    document.getElementById('digit-'+i).textContent = digits[i];
+    updateRadioState();
+  }
+
+  function updateRadioState(){
+    let correct = 0;
+    TARGET_CODE.forEach((t,i)=>{
+      const wheelDiv = document.getElementById('wheels').children[i];
+      if(digits[i] === t){ correct++; wheelDiv.classList.add('correct'); }
+      else{ wheelDiv.classList.remove('correct'); }
+    });
+    const clarity = Math.round((correct/4)*100);
+    document.getElementById('meterFill').style.width = clarity + '%';
+    document.getElementById('clarityVal').textContent = clarity + '%';
+    setAudioClarity(correct/4);
+    if(correct === 4 && !unlocked) unlockRadio();
+  }
+
+  function unlockRadio(){
+    unlocked = true;
+    if(gainNode && audioCtx) gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+    scopeRunning = false;
+    document.getElementById('radioResult').classList.add('show');
+    typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
+  }
+
+  function typewriter(text, el){
+    el.innerHTML = '';
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    (function step(){
+      if(i <= text.length){
+        el.textContent = text.slice(0,i);
+        el.appendChild(cursor);
+        i++;
+        setTimeout(step, 22);
+      }
+    })();
+  }
+
+  function resizeScopeCanvas(){
+    const canvas = document.getElementById('scopeCanvas');
+    if(!canvas) return;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+
+  function drawScope(){
+    const canvas = document.getElementById('scopeCanvas');
+    if(!scopeRunning || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = '#020402';
+    ctx.fillRect(0,0,w,h);
+    const noiseAmt = 1 - clarityLevel*0.92;
+    for(let x=0; x<w; x+=2){
+      if(Math.random() < noiseAmt){
+        const y = Math.random()*h;
+        const len = Math.random()*10+2;
+        ctx.fillStyle = `rgba(77,255,158,${0.15 + Math.random()*0.25})`;
+        ctx.fillRect(x, y, 1.5, len);
+      }
+    }
+    if(clarityLevel > 0){
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(77,255,158,${0.35 + clarityLevel*0.6})`;
+      ctx.lineWidth = 1.5;
+      const t = Date.now()/300;
+      for(let x=0;x<w;x++){
+        const y = h/2 + Math.sin(x*0.15 + t)*(h*0.28)*clarityLevel + Math.sin(x*0.4 + t*1.7)*(h*0.08)*clarityLevel;
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    requestAnimationFrame(drawScope);
+  }
+
+  function startRadioScope(){
+    if(scopeRunning) return;
+    resizeScopeCanvas();
+    scopeRunning = true;
+    drawScope();
+  }
+
+  function ensureAudio(){
+    if(audioStarted || unlocked) return;
+    audioStarted = true;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const bufferSize = 2 * audioCtx.sampleRate;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = Math.random()*2-1; }
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+    filterNode = audioCtx.createBiquadFilter();
+    filterNode.type = 'lowpass';
+    filterNode.frequency.value = 300;
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.06;
+    noiseSource.connect(filterNode);
+    filterNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    noiseSource.start();
+  }
+
+  function setAudioClarity(level){
+    clarityLevel = level;
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+    filterNode.frequency.setTargetAtTime(300 + level*4000, now, 0.15);
+    gainNode.gain.setTargetAtTime(0.06 * (1-level*0.7), now, 0.15);
+  }
+
+  // ---------------- boot ----------------
+  const profile = getProfile();
+  if(!profile){
+    showOnboard();
+  } else {
+    if(scannedItem) bookItem(scannedItem);
+    renderCaseFile(scannedItem);
+    showCaseFile();
+  }
+})();
+</script>
+</body>
+</html>
