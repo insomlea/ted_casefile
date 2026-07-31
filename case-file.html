@@ -182,19 +182,25 @@
   .scope{position:relative;height:60px;background:#020402;border:1px solid var(--green-faint);margin-bottom:16px;overflow:hidden;}
   .scope canvas{width:100%;height:100%;display:block;}
   .scope .signal-label{position:absolute;top:5px;left:8px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:rgba(77,255,158,0.55);z-index:2;}
-  .meter{margin-bottom:18px;}
-  .meter-top{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;}
-  .meter-top span.val{color:var(--green);}
-  .meter-bar{height:8px;background:#020402;border:1px solid var(--green-faint);overflow:hidden;}
-  .meter-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green-dim),var(--green));transition:width .3s ease;box-shadow:0 0 8px rgba(77,255,158,0.4);}
   .wheels{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
-  .wheel{flex:1;display:flex;flex-direction:column;align-items:center;background:#020402;border:1px solid var(--line);padding:6px 0 8px;}
-  .wheel.correct{border-color:var(--green);box-shadow:0 0 10px rgba(77,255,158,0.15) inset;}
+  .wheel{flex:1;display:flex;flex-direction:column;align-items:center;background:#020402;border:1px solid var(--line);padding:6px 0 8px;transition:border-color .15s;}
+  .wheel.error{border-color:var(--red);}
   .wheel button{background:none;border:none;color:var(--muted);font-size:16px;padding:8px 0;width:100%;cursor:pointer;font-family:'Share Tech Mono',monospace;transition:color .2s;}
   .wheel button:active{color:var(--green);}
   .wheel .digit{font-family:'VT323',monospace;font-size:38px;color:var(--green);line-height:1;text-shadow:0 0 8px rgba(77,255,158,0.45);}
-  .wheel.correct .digit{color:#eafff2;text-shadow:0 0 12px rgba(77,255,158,0.85);}
-  .hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;}
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px;}
+  .try-btn{
+    width:100%;background:var(--green-faint);border:1px solid var(--green);color:var(--green);
+    font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;padding:13px 0;
+    cursor:pointer;transition:background .2s;margin-bottom:8px;
+  }
+  .try-btn:active{background:var(--green-dim);}
+  .try-btn:disabled{opacity:0.4;cursor:default;}
+  .fail-msg{
+    text-align:center;font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;
+    color:var(--red);min-height:16px;opacity:0;transition:opacity .2s;
+  }
+  .fail-msg.show{opacity:1;}
   .result{margin-top:16px;border-top:1px dashed var(--green-faint);padding-top:16px;display:none;}
   .result.show{display:block;}
   .result .stamp{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green);border:1px solid var(--green);display:inline-block;padding:4px 10px;margin-bottom:12px;}
@@ -465,12 +471,10 @@
         <div class="reveal-inner">
           <div class="ptitle">DESCRAMBLER MODULE</div>
           <div class="scope"><div class="signal-label">SIGNAL</div><canvas id="scopeCanvas"></canvas></div>
-          <div class="meter">
-            <div class="meter-top"><span>CLARITY</span><span class="val" id="clarityVal">0%</span></div>
-            <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
-          </div>
           <div class="hint">ENTER DESCRAMBLE KEY</div>
           <div class="wheels" id="wheels"></div>
+          <button class="try-btn" id="tryBtn">ATTEMPT DESCRAMBLE</button>
+          <div class="fail-msg" id="failMsg">SIGNAL LOST — TRY AGAIN</div>
           <div class="result" id="radioResult">
             <div class="stamp">DESCRAMBLE SUCCESSFUL</div>
             <div class="transcript" id="transcript"></div>
@@ -509,6 +513,7 @@
     });
     wheelsEl.querySelectorAll('button.up').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),1)));
     wheelsEl.querySelectorAll('button.down').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),-1)));
+    document.getElementById('tryBtn').addEventListener('click', attemptDescramble);
     window.addEventListener('resize', resizeScopeCanvas);
   }
 
@@ -517,27 +522,37 @@
     ensureAudio();
     digits[i] = (digits[i] + dir + 10) % 10;
     document.getElementById('digit-'+i).textContent = digits[i];
-    updateRadioState();
+    // no partial feedback here on purpose — correctness is only revealed on submit
   }
 
-  function updateRadioState(){
-    let correct = 0;
-    TARGET_CODE.forEach((t,i)=>{
-      const wheelDiv = document.getElementById('wheels').children[i];
-      if(digits[i] === t){ correct++; wheelDiv.classList.add('correct'); }
-      else{ wheelDiv.classList.remove('correct'); }
-    });
-    const clarity = Math.round((correct/4)*100);
-    document.getElementById('meterFill').style.width = clarity + '%';
-    document.getElementById('clarityVal').textContent = clarity + '%';
-    setAudioClarity(correct/4);
-    if(correct === 4 && !unlocked) unlockRadio();
+  function attemptDescramble(){
+    if(unlocked) return;
+    ensureAudio();
+    const isCorrect = TARGET_CODE.every((t,i)=> digits[i] === t);
+    if(isCorrect){
+      unlockRadio();
+    } else {
+      showFail();
+    }
+  }
+
+  function showFail(){
+    const wheelsEl = document.getElementById('wheels');
+    const failMsg = document.getElementById('failMsg');
+    Array.from(wheelsEl.children).forEach(w=>w.classList.add('error'));
+    failMsg.classList.add('show');
+    setTimeout(()=>{
+      Array.from(wheelsEl.children).forEach(w=>w.classList.remove('error'));
+      failMsg.classList.remove('show');
+    }, 1400);
   }
 
   function unlockRadio(){
     unlocked = true;
     if(gainNode && audioCtx) gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
-    scopeRunning = false;
+    clarityLevel = 1; // brief clean-signal resolve moment
+    document.getElementById('tryBtn').disabled = true;
+    setTimeout(()=>{ scopeRunning = false; }, 900);
     document.getElementById('radioResult').classList.add('show');
     typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
   }
@@ -572,7 +587,7 @@
     ctx.fillStyle = '#020402';
     ctx.fillRect(0,0,w,h);
 
-    // background static bursts — fade out as clarity increases
+    // static bursts — always present until unlocked
     const noiseAmt = 1 - clarityLevel*0.92;
     for(let x=0; x<w; x+=2){
       if(Math.random() < noiseAmt){
@@ -583,8 +598,7 @@
       }
     }
 
-    // a wavy line is ALWAYS visible — chaotic/jittery when scrambled,
-    // smoothing into a clean waveform as the code is dialed in
+    // chaotic jittery line while scrambled — resolves to clean only at clarityLevel=1 (on unlock)
     ctx.beginPath();
     ctx.strokeStyle = `rgba(77,255,158,${0.45 + clarityLevel*0.5})`;
     ctx.lineWidth = 1.5;
@@ -630,14 +644,6 @@
     filterNode.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     noiseSource.start();
-  }
-
-  function setAudioClarity(level){
-    clarityLevel = level;
-    if(!audioCtx) return;
-    const now = audioCtx.currentTime;
-    filterNode.frequency.setTargetAtTime(300 + level*4000, now, 0.15);
-    gainNode.gain.setTargetAtTime(0.06 * (1-level*0.7), now, 0.15);
   }
 
   // ---------------- boot ----------------
