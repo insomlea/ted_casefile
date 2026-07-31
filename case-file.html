@@ -142,7 +142,7 @@
   /* letter */
   .letter-wrap{display:flex;justify-content:center;margin-bottom:14px;}
   .letter{
-    position:relative;width:260px;padding:24px 20px 26px;
+    position:relative;width:340px;padding:24px 16px 26px;
     background:radial-gradient(ellipse at 25% 15%, #ddceA0 0%, #cbb583 55%, #a68d5a 100%);
     box-shadow:0 10px 26px rgba(0,0,0,0.5); transform:rotate(0.6deg);
     clip-path:polygon(1.5% 0%, 100% 0.8%, 98.5% 99%, 3% 100%, 0% 62%);
@@ -153,14 +153,14 @@
                 radial-gradient(circle at 6% 4%, rgba(20,10,4,0.35) 0%, transparent 26%);
     pointer-events:none;
   }
-  .lsalut{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-bottom:8px;}
-  .lline{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.85;color:#241407;min-height:20px;display:flex;align-items:center;}
+  .lsalut{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-bottom:8px;white-space:nowrap;}
+  .lline{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.85;color:#241407;min-height:20px;display:flex;align-items:center;white-space:nowrap;}
   .lline.burnt .smear{
     display:block;width:100%;height:14px;border-radius:2px;
     background:linear-gradient(90deg, transparent 0%, #1c0f05 6%, #0a0502 40%, #0a0502 60%, #1c0f05 92%, transparent 100%);
     opacity:0.92;filter:blur(0.4px);
   }
-  .lsign{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-top:12px;text-align:right;}
+  .lsign{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#2b1a0a;margin-top:12px;text-align:right;white-space:nowrap;}
 
   /* business card */
   .bizcard-wrap{display:flex;justify-content:center;margin-bottom:8px;}
@@ -410,10 +410,6 @@
         <div class="field"><div class="label">CONDITION</div><div class="value">Intact. Minor wear at corners.</div></div>
         <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"No listing on file for this club. Probably nothing — kept it with the rest of the personal effects."</div></div>
       </div>
-      <div class="file-row">
-        <div><div class="fname">CARD_07.JPG</div><div class="fsub">ATTACHED FILE · ON RECORD</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge open">EVIDENCE</div></div>
-      </div>
       <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
@@ -436,25 +432,21 @@
         <div class="field"><div class="label">CONDITION</div><div class="value">Fire damaged. Several lines destroyed. Remainder legible.</div></div>
         <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"Nothing in the surviving text reads as code on its own. Worth a second look before filing."</div></div>
       </div>
-      <div class="file-row">
-        <div><div class="fname">LETTER_04.JPG</div><div class="fsub">ATTACHED FILE · ON RECORD</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge open">EVIDENCE</div></div>
-      </div>
       <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
           <div class="letter-wrap">
             <div class="letter">
               <div class="lsalut">Frank —</div>
-              <div class="lline">Keeping this short, in case it don't reach you.</div>
+              <div class="lline">Keep this quiet, no exceptions.</div>
               <div class="lline burnt"><span class="smear"></span></div>
               <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline">Running the numbers again like you asked.</div>
+              <div class="lline">Run the count again before the meet.</div>
               <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline">Asked around, nobody's talked. We're clean.</div>
+              <div class="lline">Answer for what happened at the dock.</div>
               <div class="lline burnt"><span class="smear"></span></div>
               <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline">Sent word ahead so they know we're coming.</div>
+              <div class="lline">Straighten this out before I have to.</div>
               <div class="lline burnt"><span class="smear"></span></div>
               <div class="lsign">— V.</div>
             </div>
@@ -468,10 +460,6 @@
         <div class="field"><div class="label">ITEM</div><div class="value">Two-way radio, seized from T. Marchetti residence</div></div>
         <div class="field"><div class="label">CONDITION</div><div class="value">Powered, tuned to unidentified frequency at time of seizure</div></div>
         <div class="field"><div class="label">SURVEILLANCE NOTE</div><div class="value note">"Frequency monitored for 11 days prior to raid. Recovered transmission archived below — audio was scrambled at source. Descrambler module required."</div></div>
-      </div>
-      <div class="file-row">
-        <div><div class="fname">INTERCEPT_04.WAV</div><div class="fsub">ATTACHED FILE · SCRAMBLED</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge">LOCKED</div></div>
       </div>
       <div class="reveal open">
         <div class="reveal-inner">
@@ -552,10 +540,6 @@
     scopeRunning = false;
     document.getElementById('radioResult').classList.add('show');
     typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
-    const badge = document.querySelector('#panewrap [data-id="radio"] .lockbadge');
-    if(badge){ badge.textContent = 'DESCRAMBLED'; badge.classList.add('open'); }
-    const fsub = document.querySelector('#panewrap [data-id="radio"] .fsub');
-    if(fsub){ fsub.textContent = 'ATTACHED FILE · DESCRAMBLED'; }
   }
 
   function typewriter(text, el){
@@ -587,6 +571,8 @@
     const w = canvas.width, h = canvas.height;
     ctx.fillStyle = '#020402';
     ctx.fillRect(0,0,w,h);
+
+    // background static bursts — fade out as clarity increases
     const noiseAmt = 1 - clarityLevel*0.92;
     for(let x=0; x<w; x+=2){
       if(Math.random() < noiseAmt){
@@ -596,17 +582,24 @@
         ctx.fillRect(x, y, 1.5, len);
       }
     }
-    if(clarityLevel > 0){
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(77,255,158,${0.35 + clarityLevel*0.6})`;
-      ctx.lineWidth = 1.5;
-      const t = Date.now()/300;
-      for(let x=0;x<w;x++){
-        const y = h/2 + Math.sin(x*0.15 + t)*(h*0.28)*clarityLevel + Math.sin(x*0.4 + t*1.7)*(h*0.08)*clarityLevel;
-        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.stroke();
+
+    // a wavy line is ALWAYS visible — chaotic/jittery when scrambled,
+    // smoothing into a clean waveform as the code is dialed in
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(77,255,158,${0.45 + clarityLevel*0.5})`;
+    ctx.lineWidth = 1.5;
+    const t = Date.now()/300;
+    const jitterAmt = (1 - clarityLevel) * (h*0.32);
+    for(let x=0;x<w;x++){
+      const signal = Math.sin(x*0.15 + t)*(h*0.28)*Math.max(clarityLevel,0.15)
+                   + Math.sin(x*0.4 + t*1.7)*(h*0.08)*Math.max(clarityLevel,0.15);
+      const jitter = (Math.random()*2 - 1) * jitterAmt * 0.5
+                   + Math.sin(x*1.3 + t*9) * jitterAmt * 0.5;
+      const y = h/2 + signal + jitter;
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
+    ctx.stroke();
+
     requestAnimationFrame(drawScope);
   }
 
