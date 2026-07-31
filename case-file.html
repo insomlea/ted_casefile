@@ -378,6 +378,8 @@
     document.querySelectorAll('.pane').forEach(p=>{
       p.classList.toggle('active', p.dataset.id === id);
     });
+    if(id === 'radio' && !unlocked) startRadioScope();
+    else scopeRunning = false;
   }
 
   function renderPanes(caseData){
@@ -408,11 +410,11 @@
         <div class="field"><div class="label">CONDITION</div><div class="value">Intact. Minor wear at corners.</div></div>
         <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"No listing on file for this club. Probably nothing — kept it with the rest of the personal effects."</div></div>
       </div>
-      <div class="file-row" data-toggle="key-reveal">
-        <div><div class="fname">CARD_07.JPG</div><div class="fsub">ATTACHED FILE · TAP TO VIEW</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="key-reveal">EVIDENCE</div><div class="chev" data-chev="key-reveal">&#9656;</div></div>
+      <div class="file-row">
+        <div><div class="fname">CARD_07.JPG</div><div class="fsub">ATTACHED FILE · ON RECORD</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge open">EVIDENCE</div></div>
       </div>
-      <div class="reveal" data-reveal="key-reveal">
+      <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
           <div class="bizcard-wrap">
@@ -434,11 +436,11 @@
         <div class="field"><div class="label">CONDITION</div><div class="value">Fire damaged. Several lines destroyed. Remainder legible.</div></div>
         <div class="field"><div class="label">INVESTIGATOR NOTE</div><div class="value note">"Nothing in the surviving text reads as code on its own. Worth a second look before filing."</div></div>
       </div>
-      <div class="file-row" data-toggle="ledger-reveal">
-        <div><div class="fname">LETTER_04.JPG</div><div class="fsub">ATTACHED FILE · TAP TO VIEW</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="ledger-reveal">EVIDENCE</div><div class="chev" data-chev="ledger-reveal">&#9656;</div></div>
+      <div class="file-row">
+        <div><div class="fname">LETTER_04.JPG</div><div class="fsub">ATTACHED FILE · ON RECORD</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge open">EVIDENCE</div></div>
       </div>
-      <div class="reveal" data-reveal="ledger-reveal">
+      <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">RECOVERED EXHIBIT — PHOTOGRAPHED IN PLACE</div>
           <div class="letter-wrap">
@@ -467,11 +469,11 @@
         <div class="field"><div class="label">CONDITION</div><div class="value">Powered, tuned to unidentified frequency at time of seizure</div></div>
         <div class="field"><div class="label">SURVEILLANCE NOTE</div><div class="value note">"Frequency monitored for 11 days prior to raid. Recovered transmission archived below — audio was scrambled at source. Descrambler module required."</div></div>
       </div>
-      <div class="file-row" data-toggle="radio-reveal">
-        <div><div class="fname">INTERCEPT_04.WAV</div><div class="fsub">ATTACHED FILE · TAP TO OPEN</div></div>
-        <div style="display:flex;align-items:center;"><div class="lockbadge" data-badge="radio-reveal">LOCKED</div><div class="chev" data-chev="radio-reveal">&#9656;</div></div>
+      <div class="file-row">
+        <div><div class="fname">INTERCEPT_04.WAV</div><div class="fsub">ATTACHED FILE · SCRAMBLED</div></div>
+        <div style="display:flex;align-items:center;"><div class="lockbadge">LOCKED</div></div>
       </div>
-      <div class="reveal" data-reveal="radio-reveal">
+      <div class="reveal open">
         <div class="reveal-inner">
           <div class="ptitle">DESCRAMBLER MODULE</div>
           <div class="scope"><div class="signal-label">SIGNAL</div><canvas id="scopeCanvas"></canvas></div>
@@ -492,24 +494,11 @@
   }
 
   function wireUpPane(id){
-    // generic reveal toggles
-    document.querySelectorAll(`[data-toggle]`).forEach(row=>{
-      if(row.dataset._wired) return;
-      row.dataset._wired = '1';
-      row.addEventListener('click', ()=>{
-        const key = row.dataset.toggle;
-        const reveal = document.querySelector(`[data-reveal="${key}"]`);
-        const badge = document.querySelector(`[data-badge="${key}"]`);
-        const chev = document.querySelector(`[data-chev="${key}"]`);
-        const isOpen = reveal.classList.toggle('open');
-        badge.classList.toggle('open', isOpen);
-        badge.textContent = isOpen ? (key==='radio-reveal' ? 'OPEN' : 'VIEWING') : (key==='radio-reveal' ? 'LOCKED' : 'EVIDENCE');
-        chev.classList.toggle('open', isOpen);
-        if(key === 'radio-reveal' && isOpen) startRadioScope();
-      });
-    });
-
-    if(id === 'radio') initRadio();
+    if(id === 'radio'){
+      initRadio();
+      // scope only needs to run while its pane is actually visible/active
+      if(id === activeId) startRadioScope();
+    }
   }
 
   // ---------------- radio descrambler logic ----------------
@@ -563,6 +552,10 @@
     scopeRunning = false;
     document.getElementById('radioResult').classList.add('show');
     typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
+    const badge = document.querySelector('#panewrap [data-id="radio"] .lockbadge');
+    if(badge){ badge.textContent = 'DESCRAMBLED'; badge.classList.add('open'); }
+    const fsub = document.querySelector('#panewrap [data-id="radio"] .fsub');
+    if(fsub){ fsub.textContent = 'ATTACHED FILE · DESCRAMBLED'; }
   }
 
   function typewriter(text, el){
