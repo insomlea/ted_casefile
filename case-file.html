@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>Precinct Evidence System — Case #4471</title>
+<title>Precinct Terminal — Case #4471</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <style>
@@ -16,7 +16,7 @@
   html,body{margin:0;padding:0;}
   body{
     background:var(--bg); min-height:100vh; display:flex; justify-content:center;
-    padding:18px 12px 60px; font-family:'Inter',sans-serif; color:var(--paper);
+    font-family:'Inter',sans-serif; color:var(--paper);
     position:relative; overflow-x:hidden;
   }
   body::before{
@@ -29,20 +29,17 @@
     background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
     z-index:49;
   }
-  .device{width:100%; max-width:410px;}
+  .device{width:100%; max-width:410px; min-height:100vh; display:flex; flex-direction:column;}
+  .scroll-area{flex:1; padding:18px 12px 24px; padding-bottom:100px;}
 
-  /* ---------- shared top bar ---------- */
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:16px;}
   .topbar .sys{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green-dim);}
   .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
-  .breadcrumb{margin-bottom:12px;}
-  .breadcrumb a{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);text-decoration:none;}
-  .breadcrumb a:active{color:var(--green);}
 
   /* ---------- onboarding ---------- */
-  #onboard{display:none;}
+  #onboard{display:none; padding:18px 12px;}
   #onboard.show{display:block;}
   .onb-title{font-family:'VT323',monospace;font-size:32px;color:var(--green);letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
   .onb-sub{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);margin-bottom:22px;}
@@ -61,32 +58,96 @@
   .onb-btn:active{background:var(--green-dim);}
   .onb-foot{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:14px;line-height:1.6;}
 
-  /* ---------- case file main ---------- */
-  #casefile{display:none;}
-  #casefile.show{display:block;}
-  .case-head{margin-bottom:6px;}
-  .case-num{font-family:'VT323',monospace;font-size:38px;color:var(--green);line-height:1;letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
-  .recruit-line{
-    font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--amber);
-    margin-top:4px; margin-bottom:6px;
-  }
-  .progress-line{
-    font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);
-    margin-bottom:16px;
-  }
-  .progress-line span{color:var(--green);}
+  /* ---------- app shell ---------- */
+  #app{display:none;}
+  #app.show{display:flex; flex-direction:column; flex:1;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
 
   /* toast */
   .toast{
-    display:none;
+    display:none; position:relative;
     font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;
     color:#04140a; background:var(--green); padding:9px 12px; margin-bottom:14px;
     box-shadow:0 0 14px rgba(77,255,158,0.5);
   }
   .toast.show{display:block;animation:fadein .3s ease;}
+  .toast.big{
+    padding:16px 14px; font-size:13px; letter-spacing:2px; text-align:center;
+    background:var(--amber); color:#241503; box-shadow:0 0 18px rgba(226,165,66,0.55);
+  }
   @keyframes fadein{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 
-  /* tabs */
+  /* ---------- bottom nav ---------- */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:60;
+    display:flex; justify-content:center;
+    background:rgba(8,11,9,0.96); border-top:1px solid var(--line);
+    backdrop-filter:blur(4px);
+  }
+  .bottom-nav-inner{
+    width:100%; max-width:410px; display:flex;
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:12px 0 10px; background:none; border:none; color:var(--muted); cursor:pointer;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px;
+  }
+  .nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .nav-btn.active{color:var(--green);}
+  .nav-btn.active svg{filter:drop-shadow(0 0 4px rgba(77,255,158,0.5));}
+
+  /* ---------- profile screen ---------- */
+  .rank-block{text-align:center;margin-bottom:22px;}
+  .rank-title{font-family:'VT323',monospace;font-size:34px;color:var(--green);letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
+  .rank-name{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--paper);margin-top:2px;}
+  .rank-badge{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--amber);margin-top:6px;}
+
+  .stat-row{display:flex;gap:8px;margin-bottom:22px;}
+  .stat-box{flex:1;background:var(--panel);border:1px solid var(--line);padding:14px 10px;text-align:center;}
+  .stat-box .sv{font-family:'VT323',monospace;font-size:28px;color:var(--green);line-height:1;}
+  .stat-box .sl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-top:4px;}
+
+  .section-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
+  .badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+  .badge-card{
+    background:var(--panel);border:1px solid var(--line);padding:14px 10px;text-align:center;
+    transition:border-color .2s;
+  }
+  .badge-card.earned{border-color:var(--green-faint);}
+  .badge-card .bi{font-size:24px;margin-bottom:6px;display:block;filter:grayscale(1);opacity:0.3;}
+  .badge-card.earned .bi{filter:none;opacity:1;}
+  .badge-card .bn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);line-height:1.4;}
+  .badge-card.earned .bn{color:var(--paper);}
+  .badge-card .bd{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:#3a4a3f;margin-top:5px;line-height:1.4;}
+  .badge-card.earned .bd{color:var(--green-dim);}
+
+  /* ---------- cases screen ---------- */
+  .case-list-row{
+    display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+    padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;
+  }
+  .case-list-row:active{border-color:var(--green-dim);}
+  .case-list-num{font-family:'VT323',monospace;font-size:22px;color:var(--green);}
+  .case-list-mid{flex:1;}
+  .case-list-title{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);}
+  .case-list-progress{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+  .case-list-status{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1.5px;padding:4px 8px;border:1px solid var(--green-faint);color:var(--green);white-space:nowrap;}
+  .case-list-status.closed{color:var(--muted);border-color:var(--line);}
+
+  /* ---------- case detail (sub-view within Cases tab) ---------- */
+  #caseDetail{display:none;}
+  #caseDetail.show{display:block;}
+  #casesList{display:none;}
+  #casesList.show{display:block;}
+  .back-link{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);cursor:pointer;margin-bottom:14px;display:inline-block;}
+  .back-link:active{color:var(--green);}
+  .case-head{margin-bottom:6px;}
+  .case-num{font-family:'VT323',monospace;font-size:34px;color:var(--green);line-height:1;letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
+  .progress-line{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);margin-bottom:16px;}
+  .progress-line span{color:var(--green);}
+
   .tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
   .tab{
     flex:1; min-width:78px; text-align:center; padding:10px 4px;
@@ -110,21 +171,6 @@
   }
   .locked-msg .li{font-size:22px;display:block;margin-bottom:10px;color:var(--green-dim);}
 
-  .case-row{
-    display:flex;align-items:center;gap:10px;background:var(--panel-2);
-    border:1px solid var(--line);padding:12px 14px;margin-bottom:8px;
-  }
-  .case-row-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:1px;white-space:nowrap;}
-  .case-row-title{flex:1;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);}
-  .case-row-status{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--green);border:1px solid var(--green-faint);padding:3px 7px;}
-
-  .dispatch-link-btn{
-    display:block;text-align:center;background:var(--green-faint);border:1px solid var(--green);
-    color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;
-    padding:15px 0;text-decoration:none;margin-top:4px;
-  }
-  .dispatch-link-btn:active{background:var(--green-dim);}
-
   /* ---------- evidence card (shared across panes) ---------- */
   .card{background:var(--panel);border:1px solid var(--line);padding:16px 16px 14px;margin-bottom:14px;position:relative;}
   .card::before{
@@ -138,19 +184,6 @@
   .field .label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;}
   .field .value{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--paper);line-height:1.5;}
   .field .value.note{font-style:italic;color:#9fb3a4;border-left:2px solid var(--green-faint);padding-left:10px;}
-
-  .file-row{
-    display:flex;align-items:center;justify-content:space-between;
-    background:var(--panel-2);border:1px solid var(--line);padding:14px 16px;margin-bottom:14px;
-    cursor:pointer;user-select:none;transition:border-color .2s;
-  }
-  .file-row:active{border-color:var(--green-dim);}
-  .file-row .fname{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--paper);}
-  .file-row .fsub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
-  .lockbadge{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;padding:4px 9px;border:1px solid var(--amber);color:var(--amber);transition:all .35s;}
-  .lockbadge.open{color:var(--green);border-color:var(--green);}
-  .chev{color:var(--muted);font-size:13px;margin-left:10px;transition:transform .3s;}
-  .chev.open{transform:rotate(90deg);color:var(--green);}
 
   .reveal{max-height:0;overflow:hidden;transition:max-height .5s ease;}
   .reveal.open{max-height:1400px;}
@@ -193,13 +226,11 @@
   .bc-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px;letter-spacing:3.5px;color:#2c2210;}
   .bc-sub{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:12px;letter-spacing:1.5px;color:#5a4a2c;margin-top:4px;}
   .bc-rule{width:56px;height:1px;background:rgba(90,65,35,0.45);margin:10px 0;}
-  .bc-addr{font-family:'Cormorant Garamond',serif;font-size:12.5px;color:#3a2e18;}
   .bc-phone{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:15.5px;letter-spacing:2px;color:#3a2e18;margin-top:6px;}
 
   /* descrambler */
   .scope{position:relative;height:60px;background:#020402;border:1px solid var(--green-faint);margin-bottom:16px;overflow:hidden;padding:1px;}
   .scope canvas{width:100%;height:100%;display:block;}
-  .scope .signal-label{position:absolute;top:5px;left:8px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:rgba(77,255,158,0.55);z-index:2;}
   .wheels{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
   .wheel{flex:1;display:flex;flex-direction:column;align-items:center;background:#020402;border:1px solid var(--line);padding:6px 0 8px;transition:border-color .15s;}
   .wheel.error{border-color:var(--red);}
@@ -226,6 +257,58 @@
   .cursor{display:inline-block;width:7px;height:14px;background:var(--green);margin-left:2px;animation:blink 1s step-start infinite;vertical-align:middle;}
   @keyframes blink{50%{opacity:0;}}
 
+  /* ---------- dispatch screen ---------- */
+  .map-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;}
+  .map-frame{
+    position:relative; height:300px; border:1px solid var(--green-faint);
+    background:#0a0f0a; overflow:auto; margin-bottom:16px; -webkit-overflow-scrolling:touch;
+  }
+  .map-frame svg{display:block;}
+  .map-hint{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.6;}
+  .form-row{margin-bottom:14px;}
+  .form-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;}
+  .form-grid{display:flex;gap:8px;}
+  .form-grid > *{flex:1;}
+  input.coord-input, select.dispatch-select{
+    width:100%;background:#020402;border:1px solid var(--green-faint);color:var(--green);
+    font-family:'VT323',monospace;font-size:22px;text-align:center;padding:10px 0;text-transform:uppercase;
+  }
+  input.coord-input:focus, select.dispatch-select:focus{outline:none;border-color:var(--green);}
+  select.dispatch-select{appearance:none;-webkit-appearance:none;cursor:pointer;}
+  .dispatch-btn{
+    width:100%;background:var(--green-faint);border:1px solid var(--green);color:var(--green);
+    font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:2.5px;padding:15px 0;
+    cursor:pointer;transition:background .2s;margin-top:6px;
+  }
+  .dispatch-btn:active{background:var(--green-dim);}
+  .dispatch-btn:disabled{opacity:0.4;cursor:default;}
+  .fail-box{display:none;margin-top:14px;padding:12px 14px;border:1px solid var(--red);background:rgba(193,68,58,0.08);}
+  .fail-box.show{display:block;}
+  .fail-box .ft{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--red);margin-bottom:4px;}
+  .fail-box .fd{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#d99a94;line-height:1.6;}
+  #dispatchFormView.hide{display:none;}
+  #dispatchSuccessView{display:none;}
+  #dispatchSuccessView.show{display:block;}
+  .success-stamp{
+    font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;color:var(--green);
+    border:1px solid var(--green);display:inline-block;padding:6px 12px;margin-bottom:18px;
+    box-shadow:0 0 14px rgba(77,255,158,0.25);
+  }
+  .success-line{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--paper);line-height:1.7;margin-bottom:14px;}
+  .mugshot-row{display:flex;gap:12px;margin-bottom:18px;}
+  .mugshot{flex:1;background:var(--panel-2);border:1px solid var(--line);padding:14px 12px;text-align:center;}
+  .mugshot .mtag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+  .mugshot .msilhouette{
+    width:64px;height:64px;margin:0 auto 10px;border-radius:50%;
+    background:linear-gradient(160deg,#1c2620,#0d120e); border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'VT323',monospace;font-size:26px;color:var(--green-dim);
+  }
+  .mugshot .mname{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);font-weight:600;}
+  .mugshot .mstatus{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;margin-top:4px;}
+  .mugshot .mstatus.caught{color:var(--green);}
+  .mugshot .mstatus.atlarge{color:var(--red);}
+
   .footer-note{text-align:center;font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#3a4a3f;margin-top:22px;}
   .reset-link{text-align:center;margin-top:10px;}
   .reset-link a{font-family:'Share Tech Mono',monospace;font-size:9px;color:#3a4a3f;text-decoration:underline;cursor:pointer;}
@@ -235,104 +318,200 @@
 <div class="device">
 
   <div class="topbar">
-    <div class="sys">PRECINCT EVIDENCE SYS · v2.1</div>
+    <div class="sys">PRECINCT TERMINAL · v2.2</div>
     <div class="live"><span class="dot"></span>ONLINE</div>
   </div>
-  <div class="breadcrumb"><a href="index.html">&#8592; PRECINCT HOME</a></div>
 
   <!-- ===================== ONBOARDING ===================== -->
   <div id="onboard">
     <div class="onb-title">NEW RECRUIT INTAKE</div>
-    <div class="onb-sub">CASE #4471 · MARCHETTI INVESTIGATION</div>
+    <div class="onb-sub">DISTRICT 9 PRECINCT</div>
     <div class="onb-card">
-      <div class="onb-label">ENTER YOUR NAME TO OPEN YOUR CASE FILE</div>
+      <div class="onb-label">ENTER YOUR NAME TO OPEN YOUR TERMINAL</div>
       <input type="text" id="recruitName" class="onb-input" placeholder="e.g. J. Alvarez" maxlength="24">
-      <button class="onb-btn" id="issueBtn">ISSUE BADGE &amp; OPEN FILE</button>
-      <div class="onb-foot">Your badge number will be assigned automatically. Scan evidence around the precinct to build your case as you go — items can be found in any order.</div>
+      <button class="onb-btn" id="issueBtn">ISSUE BADGE &amp; ENTER</button>
+      <div class="onb-foot">Your badge number will be assigned automatically. Scan evidence around the precinct to open and build cases as you go.</div>
     </div>
   </div>
 
-  <!-- ===================== CASE FILE ===================== -->
-  <div id="casefile">
-    <div class="case-head">
-      <div class="case-num">CASE #4471</div>
+  <!-- ===================== APP ===================== -->
+  <div id="app">
+    <div class="scroll-area">
+      <div class="toast" id="toast"></div>
+
+      <!-- ---------- PROFILE SCREEN ---------- -->
+      <div class="screen" id="screen-profile">
+        <div class="rank-block">
+          <div class="rank-title" id="rankTitle">RECRUIT</div>
+          <div class="rank-name" id="rankName"></div>
+          <div class="rank-badge" id="rankBadgeNum"></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="sv" id="statClosed">0</div><div class="sl">CASES CLOSED</div></div>
+          <div class="stat-box"><div class="sv" id="statOpen">0</div><div class="sl">CASES OPEN</div></div>
+          <div class="stat-box"><div class="sv" id="statBadges">0</div><div class="sl">BADGES</div></div>
+        </div>
+        <div class="section-title">COMMENDATIONS</div>
+        <div class="badge-grid" id="badgeGrid"></div>
+        <div class="reset-link"><a id="resetLink">reset terminal (testing)</a></div>
+      </div>
+
+      <!-- ---------- CASES SCREEN ---------- -->
+      <div class="screen" id="screen-cases">
+        <div id="casesList" class="show">
+          <div class="section-title">ACTIVE &amp; CLOSED CASES</div>
+          <div id="caseRows"></div>
+        </div>
+
+        <div id="caseDetail">
+          <div class="back-link" id="backToCases">&#8592; ALL CASES</div>
+          <div class="case-head">
+            <div class="case-num">CASE #4471</div>
+          </div>
+          <div class="progress-line" id="progressLine"></div>
+          <div class="tabs" id="tabs"></div>
+          <div class="panewrap" id="panewrap"></div>
+        </div>
+      </div>
+
+      <!-- ---------- DISPATCH SCREEN ---------- -->
+      <div class="screen" id="screen-dispatch">
+        <div id="dispatchFormView">
+          <div class="map-title">TACTICAL GRID — DISTRICT 9</div>
+          <div class="map-frame" id="mapFrame"></div>
+          <div class="map-hint">Scroll the grid to find where the rail line crosses the street named in the transmission. Note the coordinate.</div>
+
+          <div class="form-row">
+            <div class="form-label">GRID COORDINATE</div>
+            <input type="text" class="coord-input" id="coordInput" maxlength="3" placeholder="e.g. B4">
+          </div>
+
+          <div class="form-row form-grid">
+            <div>
+              <div class="form-label">DAY</div>
+              <select class="dispatch-select" id="daySelect">
+                <option value="">—</option>
+                <option>Sunday</option><option>Monday</option><option>Tuesday</option>
+                <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
+              </select>
+            </div>
+            <div>
+              <div class="form-label">HOURS (24H)</div>
+              <select class="dispatch-select" id="hourSelect">
+                <option value="">—</option>
+                <script>for(let h=0;h<24;h++){const v=String(h).padStart(2,'0');document.write(`<option value="${v}">${v}00</option>`);}</script>
+              </select>
+            </div>
+          </div>
+
+          <button class="dispatch-btn" id="dispatchBtn">DISPATCH UNITS</button>
+
+          <div class="fail-box" id="failBox">
+            <div class="ft">UNITS ARRIVED — LOCATION EMPTY</div>
+            <div class="fd">Nothing but an old boxcar and a stray cat. Recheck the grid and try again.</div>
+          </div>
+        </div>
+
+        <div id="dispatchSuccessView">
+          <div class="success-stamp">DISPATCH SUCCESSFUL</div>
+          <div class="success-line">Units arrived at the rail spur off Delancey at 2200 hours Thursday and caught the pickup in progress.</div>
+          <div class="mugshot-row">
+            <div class="mugshot">
+              <div class="mtag">SUSPECT</div>
+              <div class="msilhouette">F</div>
+              <div class="mname">FRANK D.</div>
+              <div class="mstatus caught">IN CUSTODY</div>
+            </div>
+            <div class="mugshot">
+              <div class="mtag">SUSPECT</div>
+              <div class="msilhouette">V</div>
+              <div class="mname">V. MARCHETTI</div>
+              <div class="mstatus atlarge">AT LARGE</div>
+            </div>
+          </div>
+          <div class="success-line">Frank's talking. This case isn't closed — Marchetti's still out there. Good work tonight, detective.</div>
+        </div>
+      </div>
+
+      <div class="footer-note">EVIDENCE HANDLING PROTOCOL 12-B · UNIT 4471</div>
     </div>
-    <div class="recruit-line" id="recruitLine"></div>
-    <div class="progress-line" id="progressLine"></div>
 
-    <div class="toast" id="toast"></div>
-
-    <div class="tabs" id="tabs"></div>
-
-    <div class="panewrap" id="panewrap"></div>
-
-    <div class="reset-link"><a id="resetLink">reset case file (testing)</a></div>
+    <div class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <button class="nav-btn" id="navProfile" data-screen="profile">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 19c1-3 4-4 6-4s5 1 6 4"/></svg>
+          Profile
+        </button>
+        <button class="nav-btn" id="navCases" data-screen="cases">
+          <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+          Cases
+        </button>
+        <button class="nav-btn" id="navDispatch" data-screen="dispatch">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+          Dispatch
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="footer-note">EVIDENCE HANDLING PROTOCOL 12-B · UNIT 4471</div>
 </div>
 
 <script>
 (function(){
-  // ---------------- config: evidence items ----------------
+  // ---------------- config ----------------
   const ITEMS = [
     { id:'key', tag:'EXHIBIT A', label:'Business Card', locked:false },
     { id:'ledger', tag:'ITEM 1 OF 3', label:'Letter', locked:false },
     { id:'radio', tag:'ITEM 2 OF 3', label:'Radio', locked:false }
     // add { id:'map', tag:'ITEM 3 OF 3', label:'Map' } here once built
   ];
-  const CASES = {
-    '4471': { title:'Marchetti Investigation', status:'OPEN' }
-  };
+  const CASES = { '4471': { title:'Marchetti Investigation' } };
   const TARGET_CODE = [4,7,2,8];
   const RADIO_MESSAGE = '"...where the tracks cut across Delancey, that\'s the spot. Ten at night, Thursday. Don\'t be late."';
+  const TARGET_COORD = 'D5';
+  const TARGET_DAY = 'Thursday';
+  const TARGET_HOUR = '22';
+
+  const BADGES = [
+    { id:'first_case', icon:'🥇', name:'First Case Closed', desc:'Close your first case', earned:(p,c)=> (p.closedCases||[]).length >= 1 },
+    { id:'all_evidence', icon:'🗂️', name:'By The Book', desc:'Collect all evidence before dispatching', earned:(p,c)=> (p.perfectCases||[]).length >= 1 },
+    { id:'first_try', icon:'🎯', name:'First Try', desc:'Dispatch correctly on the first attempt', earned:(p,c)=> (p.firstTryCloses||[]).length >= 1 },
+    { id:'donut', icon:'🍩', name:'Frequent Flyer', desc:'Visit the precinct terminal a few times', earned:(p,c)=> (p.visits||0) >= 3 },
+  ];
 
   // ---------------- storage helpers ----------------
   const PROFILE_KEY = 'precinct_recruit_v1';
   const CASE_KEY = 'precinct_case_4471_v1';
 
-  function getProfile(){
-    try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)); }catch(e){ return null; }
-  }
+  function getProfile(){ try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)); }catch(e){ return null; } }
   function saveProfile(p){ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
-  function getCase(){
-    try{ return JSON.parse(localStorage.getItem(CASE_KEY)) || {}; }catch(e){ return {}; }
-  }
+  function getCase(){ try{ return JSON.parse(localStorage.getItem(CASE_KEY)) || {}; }catch(e){ return {}; } }
   function saveCase(c){ localStorage.setItem(CASE_KEY, JSON.stringify(c)); }
 
   function bookItem(id){
     const c = getCase();
+    const wasEmpty = Object.keys(c).length === 0;
+    let newlyBooked = false;
     if(!c[id]){
       c[id] = { bookedAt: Date.now() };
       saveCase(c);
-      return true; // newly booked
+      newlyBooked = true;
     }
-    return false; // already had it
+    return { newlyBooked, isNewCase: wasEmpty && newlyBooked };
   }
 
-  // ---------------- onboarding flow ----------------
+  // ---------------- onboarding ----------------
   const onboardEl = document.getElementById('onboard');
-  const casefileEl = document.getElementById('casefile');
+  const appEl = document.getElementById('app');
   const params = new URLSearchParams(window.location.search);
   const scannedItem = params.get('item');
-
-  function showOnboard(){
-    onboardEl.classList.add('show');
-    casefileEl.classList.remove('show');
-  }
-  function showCaseFile(){
-    onboardEl.classList.remove('show');
-    casefileEl.classList.add('show');
-  }
 
   document.getElementById('issueBtn').addEventListener('click', ()=>{
     const name = document.getElementById('recruitName').value.trim();
     if(!name) return;
     const badge = Math.floor(1000 + Math.random()*9000);
-    saveProfile({ name, badge, created: Date.now(), cases: ['4471'] });
-    if(scannedItem) bookItem(scannedItem);
-    renderCaseFile(scannedItem);
-    showCaseFile();
+    saveProfile({ name, badge, created: Date.now(), closedCases: [], perfectCases: [], firstTryCloses: [], visits: 1, dispatchFails: 0 });
+    boot(scannedItem);
   });
 
   document.getElementById('resetLink').addEventListener('click', ()=>{
@@ -341,68 +520,80 @@
     window.location.href = window.location.pathname;
   });
 
-  // ---------------- case file rendering ----------------
-  let activeId = null;
-  let justBooked = null;
-
-  function renderCaseFile(freshlyScanned){
-    const profile = getProfile();
-    const caseData = getCase();
-
-    document.getElementById('recruitLine').textContent =
-      `DET. ${profile.name.toUpperCase()} · BADGE #${profile.badge}`;
-
-    const bookedCount = ITEMS.filter(it => caseData[it.id]).length;
-    document.getElementById('progressLine').innerHTML =
-      `EVIDENCE LOGGED: <span>${bookedCount} / ${ITEMS.length}</span>`;
-
-    // toast for newly booked item
-    const toast = document.getElementById('toast');
-    if(freshlyScanned && caseData[freshlyScanned]){
-      const item = ITEMS.find(i=>i.id===freshlyScanned);
-      if(item){
-        toast.textContent = `NEW EVIDENCE LOGGED — ${item.label.toUpperCase()}`;
-        toast.classList.add('show');
-        setTimeout(()=>toast.classList.remove('show'), 3200);
-      }
+  // ---------------- nav ----------------
+  let currentScreen = 'cases';
+  function showScreen(name){
+    currentScreen = name;
+    document.querySelectorAll('.screen').forEach(s=> s.classList.remove('active'));
+    document.getElementById('screen-'+name).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=> b.classList.toggle('active', b.dataset.screen===name));
+    if(name === 'dispatch') resizeAllScopes();
+    if(name === 'cases' && document.getElementById('caseDetail').classList.contains('show')){
+      if(activeId === 'radio' && !unlocked) startRadioScope();
     }
+  }
+  document.getElementById('navProfile').addEventListener('click', ()=> showScreen('profile'));
+  document.getElementById('navCases').addEventListener('click', ()=>{ showCasesList(); showScreen('cases'); });
+  document.getElementById('navDispatch').addEventListener('click', ()=> showScreen('dispatch'));
 
-    // tabs
+  function showCasesList(){
+    document.getElementById('casesList').classList.add('show');
+    document.getElementById('caseDetail').classList.remove('show');
+    scopeRunning = false;
+    renderCasesList();
+  }
+  function showCaseDetail(){
+    document.getElementById('casesList').classList.remove('show');
+    document.getElementById('caseDetail').classList.add('show');
+  }
+  document.getElementById('backToCases').addEventListener('click', showCasesList);
+
+  // ---------------- CASES LIST ----------------
+  function renderCasesList(){
+    const caseData = getCase();
+    const bookedCount = ITEMS.filter(it=>caseData[it.id]).length;
+    const closed = !!caseData.closed;
+    const wrap = document.getElementById('caseRows');
+    wrap.innerHTML = `
+      <div class="case-list-row" id="openCase4471">
+        <div class="case-list-num">#4471</div>
+        <div class="case-list-mid">
+          <div class="case-list-title">${CASES['4471'].title}</div>
+          <div class="case-list-progress">EVIDENCE: ${bookedCount} / ${ITEMS.length}</div>
+        </div>
+        <div class="case-list-status ${closed?'closed':''}">${closed?'CLOSED':'OPEN'}</div>
+      </div>`;
+    document.getElementById('openCase4471').addEventListener('click', ()=>{
+      showCaseDetail();
+      renderCaseDetail();
+    });
+  }
+
+  // ---------------- CASE DETAIL (evidence tabs) ----------------
+  let activeId = null;
+
+  function renderCaseDetail(freshlyScanned){
+    const caseData = getCase();
+    const bookedCount = ITEMS.filter(it => caseData[it.id]).length;
+    document.getElementById('progressLine').innerHTML = `EVIDENCE LOGGED: <span>${bookedCount} / ${ITEMS.length}</span>`;
+
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = '';
-
-    const profileTab = document.createElement('div');
-    profileTab.className = 'tab booked';
-    profileTab.innerHTML = `<span class="t1">RECRUIT</span>Profile`;
-    profileTab.dataset.id = 'profile';
-    profileTab.addEventListener('click', ()=> setActive('profile'));
-    tabsEl.appendChild(profileTab);
-
     ITEMS.forEach(item=>{
       const booked = !!caseData[item.id];
       const tab = document.createElement('div');
       tab.className = 'tab' + (booked ? ' booked' : ' locked');
       tab.innerHTML = `<span class="t1">${item.tag}</span>${booked ? item.label : '<span class="lockicon">&#128274;</span> LOCKED'}`;
-      if(booked){
-        tab.addEventListener('click', ()=> setActive(item.id));
-      }
+      if(booked) tab.addEventListener('click', ()=> setActiveTab(item.id));
       tab.dataset.id = item.id;
       tabsEl.appendChild(tab);
     });
 
-    const dispatchTab = document.createElement('div');
-    dispatchTab.className = 'tab booked dispatch-tab';
-    dispatchTab.innerHTML = `<span class="t1">TERMINAL</span>Dispatch`;
-    dispatchTab.dataset.id = 'dispatch';
-    dispatchTab.addEventListener('click', ()=> setActive('dispatch'));
-    tabsEl.appendChild(dispatchTab);
-
-    // decide active tab
     if(freshlyScanned && caseData[freshlyScanned]){
       activeId = freshlyScanned;
-    } else if(!activeId || (!caseData[activeId] && activeId !== 'profile' && activeId !== 'dispatch')){
+    } else if(!activeId || !caseData[activeId]){
       const firstBooked = ITEMS.find(it => caseData[it.id]);
-      activeId = firstBooked ? firstBooked.id : 'profile';
+      activeId = firstBooked ? firstBooked.id : null;
     }
 
     renderPanes(caseData);
@@ -410,17 +601,13 @@
   }
 
   function highlightActiveTab(){
-    document.querySelectorAll('.tab').forEach(t=>{
-      t.classList.toggle('active', t.dataset.id === activeId);
-    });
+    document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.id === activeId));
   }
 
-  function setActive(id){
+  function setActiveTab(id){
     activeId = id;
     highlightActiveTab();
-    document.querySelectorAll('.pane').forEach(p=>{
-      p.classList.toggle('active', p.dataset.id === id);
-    });
+    document.querySelectorAll('.pane').forEach(p=> p.classList.toggle('active', p.dataset.id === id));
     if(id === 'radio' && !unlocked) startRadioScope();
     else scopeRunning = false;
   }
@@ -428,13 +615,6 @@
   function renderPanes(caseData){
     const wrap = document.getElementById('panewrap');
     wrap.innerHTML = '';
-
-    const profilePane = document.createElement('div');
-    profilePane.className = 'pane' + (activeId==='profile' ? ' active' : '');
-    profilePane.dataset.id = 'profile';
-    profilePane.innerHTML = profilePaneContent(caseData);
-    wrap.appendChild(profilePane);
-
     ITEMS.forEach(item=>{
       const pane = document.createElement('div');
       pane.className = 'pane' + (item.id===activeId ? ' active' : '');
@@ -446,50 +626,7 @@
       }
       wrap.appendChild(pane);
     });
-
-    const dispatchPane = document.createElement('div');
-    dispatchPane.className = 'pane' + (activeId==='dispatch' ? ' active' : '');
-    dispatchPane.dataset.id = 'dispatch';
-    dispatchPane.innerHTML = dispatchPaneContent();
-    wrap.appendChild(dispatchPane);
-
-    // wire up interactive bits for booked panes
-    ITEMS.forEach(item=>{
-      if(caseData[item.id]) wireUpPane(item.id);
-    });
-  }
-
-  function profilePaneContent(caseData){
-    const profile = getProfile();
-    const joined = new Date(profile.created).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
-    const bookedCount = ITEMS.filter(it => caseData[it.id]).length;
-    const casesList = (profile.cases || ['4471']).map(cid=>{
-      const c = CASES[cid] || { title:'Unknown Case', status:'—' };
-      return `
-        <div class="case-row">
-          <div class="case-row-num">CASE #${cid}</div>
-          <div class="case-row-title">${c.title}</div>
-          <div class="case-row-status">${c.status}</div>
-        </div>`;
-    }).join('');
-    return `
-      <div class="card">
-        <div class="field"><div class="label">NAME</div><div class="value">Det. ${profile.name}</div></div>
-        <div class="field"><div class="label">BADGE NUMBER</div><div class="value">#${profile.badge}</div></div>
-        <div class="field"><div class="label">JOINED</div><div class="value">${joined}</div></div>
-        <div class="field"><div class="label">EVIDENCE LOGGED, CASE #4471</div><div class="value">${bookedCount} of ${ITEMS.length}</div></div>
-      </div>
-      <div class="ptitle" style="margin-top:4px;">CASES WORKED</div>
-      ${casesList}`;
-  }
-
-  function dispatchPaneContent(){
-    return `
-      <div class="card">
-        <div class="field"><div class="label">STATUS</div><div class="value">Location and meet time recovered from intercepted transmission.</div></div>
-        <div class="field"><div class="label">DISPATCH NOTE</div><div class="value note">"Cross-reference the case evidence tabs against the tactical grid before dispatching units — a wrong call sends officers in blind."</div></div>
-      </div>
-      <a href="dispatch.html" class="dispatch-link-btn">OPEN DISPATCH TERMINAL &#8594;</a>`;
+    ITEMS.forEach(item=>{ if(caseData[item.id]) wireUpPane(item.id); });
   }
 
   function paneContent(id){
@@ -571,12 +708,11 @@
   function wireUpPane(id){
     if(id === 'radio'){
       initRadio();
-      // scope only needs to run while its pane is actually visible/active, and only if unsolved
       if(id === activeId && !unlocked) startRadioScope();
     }
   }
 
-  // ---------------- radio descrambler logic ----------------
+  // ---------------- radio descrambler ----------------
   let radioInit = false;
   let digits = [0,0,0,0];
   let unlocked = false;
@@ -601,8 +737,7 @@
 
     const c = getCase();
     if(c.radio && c.radio.solved){
-      unlocked = true;
-      clarityLevel = 1;
+      unlocked = true; clarityLevel = 1;
       TARGET_CODE.forEach((d,i)=>{ digits[i] = d; document.getElementById('digit-'+i).textContent = d; });
       document.getElementById('tryBtn').disabled = true;
       document.getElementById('radioResult').classList.add('show');
@@ -615,18 +750,13 @@
     ensureAudio();
     digits[i] = (digits[i] + dir + 10) % 10;
     document.getElementById('digit-'+i).textContent = digits[i];
-    // no partial feedback here on purpose — correctness is only revealed on submit
   }
 
   function attemptDescramble(){
     if(unlocked) return;
     ensureAudio();
     const isCorrect = TARGET_CODE.every((t,i)=> digits[i] === t);
-    if(isCorrect){
-      unlockRadio();
-    } else {
-      showFail();
-    }
+    if(isCorrect) unlockRadio(); else showFail();
   }
 
   function showFail(){
@@ -643,7 +773,7 @@
   function unlockRadio(){
     unlocked = true;
     if(gainNode && audioCtx) gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
-    clarityLevel = 1; // brief clean-signal resolve moment
+    clarityLevel = 1;
     document.getElementById('tryBtn').disabled = true;
     setTimeout(()=>{ scopeRunning = false; }, 900);
     document.getElementById('radioResult').classList.add('show');
@@ -683,8 +813,6 @@
     if(w === 0 || h === 0){ requestAnimationFrame(drawScope); return; }
     ctx.fillStyle = '#020402';
     ctx.fillRect(0,0,w,h);
-
-    // static bursts — always present until unlocked
     const noiseAmt = 1 - clarityLevel*0.92;
     for(let x=0; x<w; x+=2){
       if(Math.random() < noiseAmt){
@@ -694,8 +822,6 @@
         ctx.fillRect(x, y, 1.5, len);
       }
     }
-
-    // chaotic jittery line while scrambled — resolves to clean only at clarityLevel=1 (on unlock)
     ctx.beginPath();
     ctx.strokeStyle = `rgba(77,255,158,${0.45 + clarityLevel*0.5})`;
     ctx.lineWidth = 1.5;
@@ -704,13 +830,11 @@
     for(let x=0;x<w;x++){
       const signal = Math.sin(x*0.15 + t)*(h*0.28)*Math.max(clarityLevel,0.15)
                    + Math.sin(x*0.4 + t*1.7)*(h*0.08)*Math.max(clarityLevel,0.15);
-      const jitter = (Math.random()*2 - 1) * jitterAmt * 0.5
-                   + Math.sin(x*1.3 + t*9) * jitterAmt * 0.5;
+      const jitter = (Math.random()*2 - 1) * jitterAmt * 0.5 + Math.sin(x*1.3 + t*9) * jitterAmt * 0.5;
       const y = h/2 + signal + jitter;
       if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.stroke();
-
     requestAnimationFrame(drawScope);
   }
 
@@ -720,6 +844,7 @@
     scopeRunning = true;
     drawScope();
   }
+  function resizeAllScopes(){ resizeScopeCanvas(); resizeMapIfNeeded(); }
 
   function ensureAudio(){
     if(audioStarted || unlocked) return;
@@ -743,14 +868,185 @@
     noiseSource.start();
   }
 
-  // ---------------- boot ----------------
-  const profile = getProfile();
-  if(!profile){
-    showOnboard();
+  function resizeMapIfNeeded(){}
+
+  // ---------------- DISPATCH ----------------
+  let mapBuilt = false;
+  function buildMapOnce(){
+    if(mapBuilt) return;
+    mapBuilt = true;
+    const COLS = 8, ROWS = 6, CELL = 140;
+    const W = COLS*CELL, H = ROWS*CELL;
+    const ROW_LETTERS = ['A','B','C','D','E','F'];
+    const streets = [
+      { name:'ORCHARD LN', type:'h', at:0, labelX:60 },
+      { name:'FULTON AVE', type:'h', at:1, labelX:60 },
+      { name:'GRANT BLVD', type:'h', at:4, labelX:60 },
+      { name:'CANAL RD',   type:'h', at:5, labelX:60 },
+      { name:'COOPER RD',  type:'v', at:1, labelY:40 },
+      { name:'BOWERY CT',  type:'v', at:2, labelY:40 },
+      { name:'DELANCEY ST',type:'v', at:4, labelY:40 },
+      { name:'HALSEY ST',  type:'v', at:6, labelY:40 },
+    ];
+    const railRow = 3;
+    let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#0a0f0a"/>`;
+    for(let c=0;c<=COLS;c++) svg += `<line x1="${c*CELL}" y1="0" x2="${c*CELL}" y2="${H}" stroke="#1a251c" stroke-width="1"/>`;
+    for(let r=0;r<=ROWS;r++) svg += `<line x1="0" y1="${r*CELL}" x2="${W}" y2="${r*CELL}" stroke="#1a251c" stroke-width="1"/>`;
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++)
+      svg += `<text x="${c*CELL+8}" y="${r*CELL+18}" font-family="Share Tech Mono, monospace" font-size="10" fill="#2b6b4c" opacity="0.55">${ROW_LETTERS[r]}${c+1}</text>`;
+    streets.forEach(s=>{
+      if(s.type==='h'){
+        const y = s.at*CELL + CELL/2;
+        svg += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#5a6f60" stroke-width="3"/>`;
+        svg += `<text x="${s.labelX}" y="${y-8}" font-family="Share Tech Mono, monospace" font-size="12" letter-spacing="1" fill="#a9c2b3">${s.name}</text>`;
+      } else {
+        const x = s.at*CELL + CELL/2;
+        svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#5a6f60" stroke-width="3"/>`;
+        svg += `<text x="${x+8}" y="${s.labelY}" font-family="Share Tech Mono, monospace" font-size="12" letter-spacing="1" fill="#a9c2b3" transform="rotate(90 ${x+8} ${s.labelY})">${s.name}</text>`;
+      }
+    });
+    const railY = railRow*CELL + CELL/2;
+    svg += `<line x1="0" y1="${railY}" x2="${W}" y2="${railY}" stroke="#e2a542" stroke-width="2" stroke-dasharray="2,10"/>`;
+    for(let x=10;x<W;x+=26) svg += `<line x1="${x}" y1="${railY-6}" x2="${x}" y2="${railY+6}" stroke="#e2a542" stroke-width="2" opacity="0.7"/>`;
+    svg += `<text x="20" y="${railY+22}" font-family="Share Tech Mono, monospace" font-size="10" letter-spacing="1.5" fill="#e2a542">RAIL LINE</text>`;
+    svg += `</svg>`;
+    document.getElementById('mapFrame').innerHTML = svg;
+  }
+
+  const coordInput = document.getElementById('coordInput');
+  const daySelect = document.getElementById('daySelect');
+  const hourSelect = document.getElementById('hourSelect');
+  const dispatchBtn = document.getElementById('dispatchBtn');
+  const failBox = document.getElementById('failBox');
+
+  coordInput.addEventListener('input', ()=>{ coordInput.value = coordInput.value.toUpperCase(); });
+
+  dispatchBtn.addEventListener('click', ()=>{
+    const coord = coordInput.value.trim().toUpperCase();
+    const day = daySelect.value;
+    const hour = hourSelect.value;
+
+    if(!coord || !day || !hour){
+      failBox.querySelector('.ft').textContent = 'INCOMPLETE DISPATCH ORDER';
+      failBox.querySelector('.fd').textContent = 'Fill in the coordinate, day, and time before dispatching units.';
+      failBox.classList.add('show');
+      return;
+    }
+
+    const correct = coord === TARGET_COORD && day === TARGET_DAY && hour === TARGET_HOUR;
+    const profile = getProfile();
+    const caseData = getCase();
+
+    if(correct){
+      document.getElementById('dispatchFormView').classList.add('hide');
+      document.getElementById('dispatchSuccessView').classList.add('show');
+
+      if(!caseData.closed){
+        caseData.closed = true;
+        caseData.closedAt = Date.now();
+        saveCase(caseData);
+
+        const bookedCount = ITEMS.filter(it=>caseData[it.id]).length;
+        profile.closedCases = profile.closedCases || [];
+        profile.closedCases.push('4471');
+        if(bookedCount === ITEMS.length){
+          profile.perfectCases = profile.perfectCases || [];
+          profile.perfectCases.push('4471');
+        }
+        if((profile.dispatchFails||0) === 0){
+          profile.firstTryCloses = profile.firstTryCloses || [];
+          profile.firstTryCloses.push('4471');
+        }
+        saveProfile(profile);
+      }
+    } else {
+      profile.dispatchFails = (profile.dispatchFails||0) + 1;
+      saveProfile(profile);
+      failBox.querySelector('.ft').textContent = 'UNITS ARRIVED — LOCATION EMPTY';
+      failBox.querySelector('.fd').textContent = 'Nothing but an old boxcar and a stray cat. Recheck the grid and try again.';
+      failBox.classList.add('show');
+      setTimeout(()=> failBox.classList.remove('show'), 3500);
+    }
+  });
+
+  // ---------------- PROFILE ----------------
+  function renderProfile(){
+    const profile = getProfile();
+    const caseData = getCase();
+    const closedCount = (profile.closedCases||[]).length;
+    const openCount = caseData.closed ? 0 : 1;
+
+    let rank = 'RECRUIT';
+    if(closedCount >= 10) rank = 'LIEUTENANT';
+    else if(closedCount >= 3) rank = 'SENIOR DETECTIVE';
+    else if(closedCount >= 1) rank = 'DETECTIVE';
+
+    document.getElementById('rankTitle').textContent = rank;
+    document.getElementById('rankName').textContent = `DET. ${profile.name.toUpperCase()}`;
+    document.getElementById('rankBadgeNum').textContent = `BADGE #${profile.badge}`;
+    document.getElementById('statClosed').textContent = closedCount;
+    document.getElementById('statOpen').textContent = openCount;
+
+    const earnedBadges = BADGES.filter(b=>b.earned(profile, caseData));
+    document.getElementById('statBadges').textContent = earnedBadges.length;
+
+    const grid = document.getElementById('badgeGrid');
+    grid.innerHTML = '';
+    BADGES.forEach(b=>{
+      const earned = b.earned(profile, caseData);
+      const card = document.createElement('div');
+      card.className = 'badge-card' + (earned ? ' earned' : '');
+      card.innerHTML = `<span class="bi">${b.icon}</span><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------------- TOAST ----------------
+  function showToast(text, big){
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.className = 'toast show' + (big ? ' big' : '');
+    setTimeout(()=> toast.classList.remove('show'), big ? 4200 : 3200);
+  }
+
+  // ---------------- BOOT ----------------
+  function boot(scanned){
+    const profile = getProfile();
+    profile.visits = (profile.visits||0) + 1;
+    saveProfile(profile);
+
+    let bookResult = { newlyBooked:false, isNewCase:false };
+    if(scanned) bookResult = bookItem(scanned);
+
+    onboardEl.classList.remove('show');
+    appEl.classList.add('show');
+
+    renderProfile();
+    renderCasesList();
+
+    if(scanned && bookResult.newlyBooked){
+      showCaseDetail();
+      renderCaseDetail(scanned);
+      showScreen('cases');
+      if(bookResult.isNewCase){
+        showToast('NEW CASE OPENED — CASE #4471', true);
+      } else {
+        const item = ITEMS.find(i=>i.id===scanned);
+        if(item) showToast(`NEW EVIDENCE LOGGED — ${item.label.toUpperCase()}`, false);
+      }
+    } else {
+      showScreen('cases');
+    }
+
+    buildMapOnce();
+  }
+
+  const existingProfile = getProfile();
+  if(!existingProfile){
+    onboardEl.classList.add('show');
   } else {
-    if(scannedItem) bookItem(scannedItem);
-    renderCaseFile(scannedItem);
-    showCaseFile();
+    boot(scannedItem);
   }
 })();
 </script>
