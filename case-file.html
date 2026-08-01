@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Precinct Terminal — Case #4471</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
@@ -85,6 +85,7 @@
     display:flex; justify-content:center;
     background:rgba(8,11,9,0.96); border-top:1px solid var(--line);
     backdrop-filter:blur(4px);
+    padding-bottom:env(safe-area-inset-bottom, 0px);
   }
   .bottom-nav-inner{
     width:100%; max-width:410px; display:flex;
@@ -110,17 +111,21 @@
   .stat-box .sl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-top:4px;}
 
   .section-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
-  .badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+  .badge-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
   .badge-card{
-    background:var(--panel);border:1px solid var(--line);padding:14px 10px;text-align:center;
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--line);padding:12px 14px;text-align:left;
     transition:border-color .2s;
   }
   .badge-card.earned{border-color:var(--green-faint);}
-  .badge-card .bi{font-size:24px;margin-bottom:6px;display:block;filter:grayscale(1);opacity:0.3;}
-  .badge-card.earned .bi{filter:none;opacity:1;}
-  .badge-card .bn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);line-height:1.4;}
+  .badge-card .bi{flex-shrink:0;display:flex;justify-content:center;align-items:center;color:var(--muted);opacity:0.4;}
+  .badge-card .bi svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .badge-card.earned .bi{color:var(--green);opacity:1;}
+  .badge-card.earned .bi svg{filter:drop-shadow(0 0 4px rgba(77,255,158,0.4));}
+  .badge-card .btext{min-width:0;}
+  .badge-card .bn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);line-height:1.4;}
   .badge-card.earned .bn{color:var(--paper);}
-  .badge-card .bd{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:#3a4a3f;margin-top:5px;line-height:1.4;}
+  .badge-card .bd{font-family:'Share Tech Mono',monospace;font-size:9px;color:#3a4a3f;margin-top:3px;line-height:1.4;}
   .badge-card.earned .bd{color:var(--green-dim);}
 
   /* ---------- cases screen ---------- */
@@ -379,7 +384,6 @@
         <div id="dispatchFormView">
           <div class="map-title">TACTICAL GRID — DISTRICT 9</div>
           <div class="map-frame" id="mapFrame"></div>
-          <div class="map-hint">Scroll the grid to find where the rail line crosses the street named in the transmission. Note the coordinate.</div>
 
           <div class="form-row">
             <div class="form-label">GRID COORDINATE</div>
@@ -472,11 +476,18 @@
   const TARGET_DAY = 'Thursday';
   const TARGET_HOUR = '22';
 
+  const BADGE_ICONS = {
+    no_stone: '<svg viewBox="0 0 24 24"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><path d="M4 8l2.5-4h11L20 8"/><path d="M9.5 12v3l2.5-1.5 2.5 1.5v-3"/></svg>',
+    first_case: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.3-3 7.3-7 9-4-1.7-7-4.7-7-9V6l7-3z"/><path d="M9 12.2l2 2 4-4.4"/></svg>',
+    rookie_mistake: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 9l2 2M10 9l-2 2M14 9l2 2M16 9l-2 2"/><path d="M8 14.5c1.4 1.8 2.7 2.5 4 2.5s2.6-.7 4-2.5"/></svg>',
+    first_try: '<svg viewBox="0 0 24 24"><circle cx="10" cy="14" r="7"/><circle cx="10" cy="14" r="4"/><circle cx="10" cy="14" r="1" fill="currentColor" stroke="none"/><path d="M13 11l7-7"/><path d="M20 4l-3 .3.3-3z"/></svg>'
+  };
+
   const BADGES = [
-    { id:'first_case', icon:'🥇', name:'First Case Closed', desc:'Close your first case', earned:(p,c)=> (p.closedCases||[]).length >= 1 },
-    { id:'all_evidence', icon:'🗂️', name:'By The Book', desc:'Collect all evidence before dispatching', earned:(p,c)=> (p.perfectCases||[]).length >= 1 },
-    { id:'first_try', icon:'🎯', name:'First Try', desc:'Dispatch correctly on the first attempt', earned:(p,c)=> (p.firstTryCloses||[]).length >= 1 },
-    { id:'donut', icon:'🍩', name:'Frequent Flyer', desc:'Visit the precinct terminal a few times', earned:(p,c)=> (p.visits||0) >= 3 },
+    { id:'first_case', name:'First Case Closed', desc:'Close your first case', earned:(p,c)=> (p.closedCases||[]).length >= 1 },
+    { id:'first_try', name:'First Try', desc:'Dispatch correctly on the first attempt', earned:(p,c)=> (p.firstTryCloses||[]).length >= 1 },
+    { id:'no_stone', name:'No Stone Unturned', desc:'Collect every piece of evidence in a case', earned:(p,c)=> ITEMS.every(it=>c[it.id]) },
+    { id:'rookie_mistake', name:'Rookie Mistake', desc:'Dispatch units to the wrong location', earned:(p,c)=> (p.dispatchFails||0) >= 1 },
   ];
 
   // ---------------- storage helpers ----------------
@@ -510,7 +521,7 @@
     const name = document.getElementById('recruitName').value.trim();
     if(!name) return;
     const badge = Math.floor(1000 + Math.random()*9000);
-    saveProfile({ name, badge, created: Date.now(), closedCases: [], perfectCases: [], firstTryCloses: [], visits: 1, dispatchFails: 0 });
+    saveProfile({ name, badge, created: Date.now(), closedCases: [], firstTryCloses: [], visits: 1, dispatchFails: 0 });
     boot(scannedItem);
   });
 
@@ -947,13 +958,8 @@
         caseData.closedAt = Date.now();
         saveCase(caseData);
 
-        const bookedCount = ITEMS.filter(it=>caseData[it.id]).length;
         profile.closedCases = profile.closedCases || [];
         profile.closedCases.push('4471');
-        if(bookedCount === ITEMS.length){
-          profile.perfectCases = profile.perfectCases || [];
-          profile.perfectCases.push('4471');
-        }
         if((profile.dispatchFails||0) === 0){
           profile.firstTryCloses = profile.firstTryCloses || [];
           profile.firstTryCloses.push('4471');
@@ -997,7 +1003,7 @@
       const earned = b.earned(profile, caseData);
       const card = document.createElement('div');
       card.className = 'badge-card' + (earned ? ' earned' : '');
-      card.innerHTML = `<span class="bi">${b.icon}</span><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>`;
+      card.innerHTML = `<span class="bi">${BADGE_ICONS[b.id]}</span><div class="btext"><div class="bn">${b.name}</div><div class="bd">${b.desc}</div></div>`;
       grid.appendChild(card);
     });
   }
