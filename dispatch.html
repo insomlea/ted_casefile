@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Precinct Dispatch — Case #4471</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080b09; --panel:#10160f; --panel-2:#141b13; --line:#243024;
+    --green:#4dff9e; --green-dim:#2b6b4c; --green-faint:#1f3a2a;
+    --amber:#e2a542; --red:#c1443a; --paper:#c9d4c9; --muted:#6e8377;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); min-height:100vh; display:flex; justify-content:center;
+    padding:18px 12px 60px; font-family:'Inter',sans-serif; color:var(--paper);
+    position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 3px);
+    z-index:50; mix-blend-mode:overlay;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    z-index:49;
+  }
+  .device{width:100%; max-width:410px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  .topbar .sys{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green-dim);}
+  .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+  .case-head{margin-bottom:14px;}
+  .case-num{font-family:'VT323',monospace;font-size:34px;color:var(--green);line-height:1;letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
+  .item-tag{display:inline-block;margin-top:4px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--amber);border:1px solid rgba(226,165,66,0.4);padding:3px 8px;}
+
+  .card{background:var(--panel);border:1px solid var(--line);padding:16px 16px 14px;margin-bottom:14px;}
+  .field{margin-bottom:10px;}
+  .field:last-child{margin-bottom:0;}
+  .field .label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;}
+  .field .value{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--paper);line-height:1.5;}
+  .field .value.note{font-style:italic;color:#9fb3a4;border-left:2px solid var(--green-faint);padding-left:10px;}
+
+  /* ---------------- map ---------------- */
+  .map-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;}
+  .map-frame{
+    position:relative;
+    height:320px;
+    border:1px solid var(--green-faint);
+    background:#0a0f0a;
+    overflow:auto;
+    margin-bottom:16px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .map-frame svg{display:block;}
+  .map-hint{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);
+    text-align:center;margin-bottom:18px;line-height:1.6;
+  }
+
+  /* ---------------- dispatch form ---------------- */
+  .form-row{margin-bottom:14px;}
+  .form-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;}
+  .form-grid{display:flex;gap:8px;}
+  .form-grid > *{flex:1;}
+  input.coord-input, select.dispatch-select{
+    width:100%;background:#020402;border:1px solid var(--green-faint);color:var(--green);
+    font-family:'VT323',monospace;font-size:22px;text-align:center;padding:10px 0;
+    text-transform:uppercase;
+  }
+  input.coord-input:focus, select.dispatch-select:focus{outline:none;border-color:var(--green);}
+  select.dispatch-select{appearance:none;-webkit-appearance:none;cursor:pointer;}
+
+  .dispatch-btn{
+    width:100%;background:var(--green-faint);border:1px solid var(--green);color:var(--green);
+    font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:2.5px;padding:15px 0;
+    cursor:pointer;transition:background .2s;margin-top:6px;
+  }
+  .dispatch-btn:active{background:var(--green-dim);}
+  .dispatch-btn:disabled{opacity:0.4;cursor:default;}
+
+  .fail-box{
+    display:none;margin-top:14px;padding:12px 14px;border:1px solid var(--red);
+    background:rgba(193,68,58,0.08);
+  }
+  .fail-box.show{display:block;}
+  .fail-box .ft{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--red);margin-bottom:4px;}
+  .fail-box .fd{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#d99a94;line-height:1.6;}
+
+  /* ---------------- success screen ---------------- */
+  #successView{display:none;}
+  #successView.show{display:block;}
+  #dispatchView.hide{display:none;}
+  .success-stamp{
+    font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;color:var(--green);
+    border:1px solid var(--green);display:inline-block;padding:6px 12px;margin-bottom:18px;
+    box-shadow:0 0 14px rgba(77,255,158,0.25);
+  }
+  .success-line{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--paper);line-height:1.7;margin-bottom:14px;}
+  .mugshot-row{display:flex;gap:12px;margin-bottom:18px;}
+  .mugshot{
+    flex:1;background:var(--panel-2);border:1px solid var(--line);padding:14px 12px;text-align:center;
+  }
+  .mugshot .mtag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+  .mugshot .msilhouette{
+    width:64px;height:64px;margin:0 auto 10px;border-radius:50%;
+    background:linear-gradient(160deg,#1c2620,#0d120e);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'VT323',monospace;font-size:26px;color:var(--green-dim);
+  }
+  .mugshot .mname{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);font-weight:600;}
+  .mugshot .mstatus{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;margin-top:4px;}
+  .mugshot .mstatus.caught{color:var(--green);}
+  .mugshot .mstatus.atlarge{color:var(--red);}
+
+  .footer-note{text-align:center;font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#3a4a3f;margin-top:22px;}
+</style>
+</head>
+<body>
+<div class="device">
+
+  <div class="topbar">
+    <div class="sys">PRECINCT DISPATCH · v2.1</div>
+    <div class="live"><span class="dot"></span>ONLINE</div>
+  </div>
+
+  <div class="case-head">
+    <div class="case-num">CASE #4471</div>
+    <div class="item-tag">DISPATCH TERMINAL</div>
+  </div>
+
+  <div id="dispatchView">
+
+    <div class="map-title">TACTICAL GRID — DISTRICT 9</div>
+    <div class="map-frame" id="mapFrame"></div>
+    <div class="map-hint">Scroll the grid to find where the rail line crosses the street named in the transmission. Note the coordinate.</div>
+
+    <div class="form-row">
+      <div class="form-label">GRID COORDINATE</div>
+      <input type="text" class="coord-input" id="coordInput" maxlength="3" placeholder="e.g. B4">
+    </div>
+
+    <div class="form-row form-grid">
+      <div>
+        <div class="form-label">DAY</div>
+        <select class="dispatch-select" id="daySelect">
+          <option value="">—</option>
+          <option>Sunday</option><option>Monday</option><option>Tuesday</option>
+          <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-label">HOURS (24H)</div>
+        <select class="dispatch-select" id="hourSelect">
+          <option value="">—</option>
+          <script>for(let h=0;h<24;h++){const v=String(h).padStart(2,'0');document.write(`<option value="${v}">${v}00</option>`);}</script>
+        </select>
+      </div>
+    </div>
+
+    <button class="dispatch-btn" id="dispatchBtn">DISPATCH UNITS</button>
+
+    <div class="fail-box" id="failBox">
+      <div class="ft">UNITS ARRIVED — LOCATION EMPTY</div>
+      <div class="fd">Nothing but an old boxcar and a stray cat. Recheck the grid and try again.</div>
+    </div>
+
+  </div>
+
+  <div id="successView">
+    <div class="success-stamp">DISPATCH SUCCESSFUL</div>
+    <div class="success-line">Units arrived at the rail spur off Delancey at 2200 hours Thursday and caught the pickup in progress.</div>
+
+    <div class="mugshot-row">
+      <div class="mugshot">
+        <div class="mtag">SUSPECT</div>
+        <div class="msilhouette">F</div>
+        <div class="mname">FRANK D.</div>
+        <div class="mstatus caught">IN CUSTODY</div>
+      </div>
+      <div class="mugshot">
+        <div class="mtag">SUSPECT</div>
+        <div class="msilhouette">V</div>
+        <div class="mname">V. MARCHETTI</div>
+        <div class="mstatus atlarge">AT LARGE</div>
+      </div>
+    </div>
+
+    <div class="success-line">Frank's talking. This case isn't closed — Marchetti's still out there. Good work tonight, detective.</div>
+  </div>
+
+  <div class="footer-note">EVIDENCE HANDLING PROTOCOL 12-B · UNIT 4471</div>
+</div>
+
+<script>
+(function(){
+  const TARGET_COORD = 'D5';
+  const TARGET_DAY = 'Thursday';
+  const TARGET_HOUR = '22';
+
+  const COLS = 8, ROWS = 6, CELL = 140;
+  const W = COLS*CELL, H = ROWS*CELL;
+  const ROW_LETTERS = ['A','B','C','D','E','F'];
+
+  const streets = [
+    { name:'ORCHARD LN', type:'h', at:0, labelX:60 },
+    { name:'FULTON AVE', type:'h', at:1, labelX:60 },
+    { name:'GRANT BLVD', type:'h', at:4, labelX:60 },
+    { name:'CANAL RD',   type:'h', at:5, labelX:60 },
+    { name:'COOPER RD',  type:'v', at:1, labelY:40 },
+    { name:'BOWERY CT',  type:'v', at:2, labelY:40 },
+    { name:'DELANCEY ST',type:'v', at:4, labelY:40 },
+    { name:'HALSEY ST',  type:'v', at:6, labelY:40 },
+  ];
+  const railRow = 3; // row D (0-indexed: A=0,B=1,C=2,D=3)
+
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#0a0f0a"/>`;
+
+  // block grid
+  for(let c=0;c<=COLS;c++){
+    svg += `<line x1="${c*CELL}" y1="0" x2="${c*CELL}" y2="${H}" stroke="#1a251c" stroke-width="1"/>`;
+  }
+  for(let r=0;r<=ROWS;r++){
+    svg += `<line x1="0" y1="${r*CELL}" x2="${W}" y2="${r*CELL}" stroke="#1a251c" stroke-width="1"/>`;
+  }
+
+  // faint coordinate labels per cell
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      svg += `<text x="${c*CELL+8}" y="${r*CELL+18}" font-family="Share Tech Mono, monospace" font-size="10" fill="#2b6b4c" opacity="0.55">${ROW_LETTERS[r]}${c+1}</text>`;
+    }
+  }
+
+  // named streets
+  streets.forEach(s=>{
+    if(s.type==='h'){
+      const y = s.at*CELL + CELL/2;
+      svg += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#5a6f60" stroke-width="3"/>`;
+      svg += `<text x="${s.labelX}" y="${y-8}" font-family="Share Tech Mono, monospace" font-size="12" letter-spacing="1" fill="#a9c2b3">${s.name}</text>`;
+    } else {
+      const x = s.at*CELL + CELL/2;
+      svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#5a6f60" stroke-width="3"/>`;
+      svg += `<text x="${x+8}" y="${s.labelY}" font-family="Share Tech Mono, monospace" font-size="12" letter-spacing="1" fill="#a9c2b3" transform="rotate(90 ${x+8} ${s.labelY})">${s.name}</text>`;
+    }
+  });
+
+  // rail line (dashed with cross ties)
+  const railY = railRow*CELL + CELL/2;
+  svg += `<line x1="0" y1="${railY}" x2="${W}" y2="${railY}" stroke="#e2a542" stroke-width="2" stroke-dasharray="2,10"/>`;
+  for(let x=10;x<W;x+=26){
+    svg += `<line x1="${x}" y1="${railY-6}" x2="${x}" y2="${railY+6}" stroke="#e2a542" stroke-width="2" opacity="0.7"/>`;
+  }
+  svg += `<text x="20" y="${railY+22}" font-family="Share Tech Mono, monospace" font-size="10" letter-spacing="1.5" fill="#e2a542">RAIL LINE</text>`;
+
+  svg += `</svg>`;
+  document.getElementById('mapFrame').innerHTML = svg;
+
+  // scroll map to a neutral, non-giveaway starting position
+  const mapFrame = document.getElementById('mapFrame');
+  mapFrame.scrollLeft = 0;
+  mapFrame.scrollTop = 0;
+
+  // ---------------- dispatch logic ----------------
+  const coordInput = document.getElementById('coordInput');
+  const daySelect = document.getElementById('daySelect');
+  const hourSelect = document.getElementById('hourSelect');
+  const dispatchBtn = document.getElementById('dispatchBtn');
+  const failBox = document.getElementById('failBox');
+
+  coordInput.addEventListener('input', ()=>{
+    coordInput.value = coordInput.value.toUpperCase();
+  });
+
+  dispatchBtn.addEventListener('click', ()=>{
+    const coord = coordInput.value.trim().toUpperCase();
+    const day = daySelect.value;
+    const hour = hourSelect.value;
+
+    if(!coord || !day || !hour){
+      failBox.querySelector('.ft').textContent = 'INCOMPLETE DISPATCH ORDER';
+      failBox.querySelector('.fd').textContent = 'Fill in the coordinate, day, and time before dispatching units.';
+      failBox.classList.add('show');
+      return;
+    }
+
+    const correct = coord === TARGET_COORD && day === TARGET_DAY && hour === TARGET_HOUR;
+
+    if(correct){
+      document.getElementById('dispatchView').classList.add('hide');
+      document.getElementById('successView').classList.add('show');
+      window.scrollTo(0,0);
+    } else {
+      failBox.querySelector('.ft').textContent = 'UNITS ARRIVED — LOCATION EMPTY';
+      failBox.querySelector('.fd').textContent = 'Nothing but an old boxcar and a stray cat. Recheck the grid and try again.';
+      failBox.classList.add('show');
+      setTimeout(()=> failBox.classList.remove('show'), 3500);
+    }
+  });
+})();
+</script>
+</body>
+</html>
