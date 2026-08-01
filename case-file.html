@@ -528,7 +528,7 @@
   document.getElementById('resetLink').addEventListener('click', ()=>{
     localStorage.removeItem(PROFILE_KEY);
     localStorage.removeItem(CASE_KEY);
-    window.location.href = window.location.pathname;
+    window.location.href = window.location.pathname + window.location.search;
   });
 
   // ---------------- nav ----------------
@@ -1046,6 +1046,20 @@
     }
 
     buildMapOnce();
+  }
+
+  // ---------------- demo mode ----------------
+  // Embed with ?demo=1 to pre-load a profile and all evidence, skipping onboarding
+  // and NFC scanning — useful for letting people try the app on a website.
+  function seedDemoData(){
+    if(getProfile()) return; // never overwrite a real visitor's progress
+    saveProfile({ name:'Demo Recruit', badge:4471, created:Date.now(), closedCases:[], firstTryCloses:[], visits:0, dispatchFails:0 });
+    const c = {};
+    ITEMS.forEach(it=>{ c[it.id] = { bookedAt: Date.now() }; });
+    saveCase(c);
+  }
+  if(params.get('demo') === '1'){
+    seedDemoData();
   }
 
   const existingProfile = getProfile();
