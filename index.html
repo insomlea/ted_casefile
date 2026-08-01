@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Precinct Terminal — Case #4471</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080b09; --panel:#10160f; --panel-2:#141b13; --line:#243024;
+    --green:#4dff9e; --green-dim:#2b6b4c; --green-faint:#1f3a2a;
+    --amber:#e2a542; --red:#c1443a; --paper:#c9d4c9; --muted:#6e8377;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); min-height:100vh; display:flex; justify-content:center;
+    padding:18px 12px 60px; font-family:'Inter',sans-serif; color:var(--paper);
+    position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 3px);
+    z-index:50; mix-blend-mode:overlay;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    z-index:49;
+  }
+  .device{width:100%; max-width:410px; padding-top:8vh;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .topbar .sys{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green-dim);}
+  .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+  .hero-title{
+    font-family:'VT323',monospace;font-size:44px;color:var(--green);line-height:1.05;
+    letter-spacing:1px;text-shadow:0 0 14px rgba(77,255,158,0.35);margin-bottom:4px;
+  }
+  .hero-sub{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;}
+  .hero-case{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--amber);margin-bottom:32px;}
+
+  .welcome{
+    background:var(--panel);border:1px solid var(--line);padding:14px 16px;margin-bottom:24px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);line-height:1.6;
+  }
+  .welcome .wl{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px;}
+
+  .nav-btn{
+    display:block;background:var(--panel);border:1px solid var(--green-faint);color:var(--paper);
+    text-decoration:none;padding:20px 18px;margin-bottom:14px;transition:border-color .2s,background .2s;
+  }
+  .nav-btn:active{background:var(--panel-2);border-color:var(--green);}
+  .nav-btn .nt{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:5px;}
+  .nav-btn .nn{font-family:'VT323',monospace;font-size:26px;color:var(--green);letter-spacing:1px;}
+  .nav-btn .nd{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+
+  .footer-note{text-align:center;font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#3a4a3f;margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="device">
+
+  <div class="topbar">
+    <div class="sys">PRECINCT TERMINAL · v2.1</div>
+    <div class="live"><span class="dot"></span>ONLINE</div>
+  </div>
+
+  <div class="hero-title">PRECINCT<br>TERMINAL</div>
+  <div class="hero-sub">DISTRICT 9 · EVIDENCE &amp; DISPATCH SYSTEM</div>
+  <div class="hero-case">CASE #4471 — MARCHETTI INVESTIGATION</div>
+
+  <div class="welcome" id="welcomeBox" style="display:none;">
+    <div class="wl">WELCOME BACK</div>
+    <div id="welcomeText"></div>
+  </div>
+
+  <a href="case-file.html" class="nav-btn">
+    <div class="nt">OPEN</div>
+    <div class="nn">CASE FILE</div>
+    <div class="nd">Review your profile and scan evidence around the precinct to build your case.</div>
+  </a>
+
+  <a href="dispatch.html" class="nav-btn">
+    <div class="nt">OPEN</div>
+    <div class="nn">DISPATCH TERMINAL</div>
+    <div class="nd">Cross-reference your evidence and dispatch units to the correct location.</div>
+  </a>
+
+  <div class="footer-note">EVIDENCE HANDLING PROTOCOL 12-B · UNIT 4471</div>
+</div>
+
+<script>
+(function(){
+  const PROFILE_KEY = 'precinct_recruit_v1';
+  let profile = null;
+  try{ profile = JSON.parse(localStorage.getItem(PROFILE_KEY)); }catch(e){}
+
+  if(profile){
+    document.getElementById('welcomeBox').style.display = 'block';
+    document.getElementById('welcomeText').textContent =
+      `DET. ${profile.name.toUpperCase()} · BADGE #${profile.badge}`;
+  }
+})();
+</script>
+</body>
+</html>

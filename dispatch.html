@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Precinct Dispatch — Case #4471</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#080b09; --panel:#10160f; --panel-2:#141b13; --line:#243024;
@@ -36,10 +36,40 @@
   .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+  .breadcrumb{margin-bottom:12px;display:flex;gap:16px;}
+  .breadcrumb a{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);text-decoration:none;}
+  .breadcrumb a:active{color:var(--green);}
+
+  /* ---------------- evidence reference ---------------- */
+  .ref-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;}
+  .ref-tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .ref-tab{
+    flex:1;text-align:center;padding:8px 4px;font-family:'Share Tech Mono',monospace;font-size:9.5px;
+    letter-spacing:0.5px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);cursor:pointer;
+  }
+  .ref-tab.active{border-color:var(--green);color:var(--green);background:var(--green-faint);}
+  .ref-tab.locked{color:#3a4a3f;cursor:default;}
+  .ref-pane{display:none;background:var(--panel);border:1px solid var(--line);padding:14px;margin-bottom:18px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;color:var(--paper);}
+  .ref-pane.active{display:block;}
+  .ref-locked{color:var(--muted);font-style:italic;text-align:center;padding:10px 0;}
+  .ref-transcript{color:#eafff2;}
+  .ref-card-mini{
+    background:linear-gradient(155deg,#f3ecda,#e2d4b2);border-radius:4px;padding:12px;text-align:center;color:#2c2210;
+    font-family:'Cormorant Garamond',serif;
+  }
+  .ref-card-mini .rn{font-weight:600;font-size:18px;letter-spacing:2px;}
+  .ref-card-mini .rp{font-size:13px;font-weight:600;margin-top:4px;}
+
+  .no-profile{
+    text-align:center;padding:40px 20px;font-family:'IBM Plex Mono',monospace;font-size:13px;
+    color:var(--muted);border:1px dashed var(--green-faint);line-height:1.8;
+  }
+  .no-profile a{color:var(--green);}
 
   .case-head{margin-bottom:14px;}
   .case-num{font-family:'VT323',monospace;font-size:34px;color:var(--green);line-height:1;letter-spacing:1px;text-shadow:0 0 10px rgba(77,255,158,0.35);}
   .item-tag{display:inline-block;margin-top:4px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--amber);border:1px solid rgba(226,165,66,0.4);padding:3px 8px;}
+  .recruit-line{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--amber);margin-top:8px;margin-bottom:14px;}
 
   .card{background:var(--panel);border:1px solid var(--line);padding:16px 16px 14px;margin-bottom:14px;}
   .field{margin-bottom:10px;}
@@ -131,13 +161,24 @@
     <div class="sys">PRECINCT DISPATCH · v2.1</div>
     <div class="live"><span class="dot"></span>ONLINE</div>
   </div>
+  <div class="breadcrumb"><a href="index.html">&#8592; PRECINCT HOME</a><a href="case-file.html">CASE FILE</a></div>
 
   <div class="case-head">
     <div class="case-num">CASE #4471</div>
     <div class="item-tag">DISPATCH TERMINAL</div>
   </div>
+  <div class="recruit-line" id="recruitLine"></div>
+
+  <div id="noProfileView" class="no-profile" style="display:none;">
+    No active case file found on this device.<br>
+    Head to the <a href="index.html">precinct home page</a> to start one.
+  </div>
 
   <div id="dispatchView">
+
+    <div class="ref-title">CASE EVIDENCE REFERENCE</div>
+    <div class="ref-tabs" id="refTabs"></div>
+    <div id="refPanes"></div>
 
     <div class="map-title">TACTICAL GRID — DISTRICT 9</div>
     <div class="map-frame" id="mapFrame"></div>
@@ -205,6 +246,76 @@
   const TARGET_COORD = 'D5';
   const TARGET_DAY = 'Thursday';
   const TARGET_HOUR = '22';
+
+  // ---------------- shared storage (same keys as case-file.html) ----------------
+  const PROFILE_KEY = 'precinct_recruit_v1';
+  const CASE_KEY = 'precinct_case_4471_v1';
+  function getProfile(){ try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)); }catch(e){ return null; } }
+  function getCase(){ try{ return JSON.parse(localStorage.getItem(CASE_KEY)) || {}; }catch(e){ return {}; } }
+
+  const profile = getProfile();
+  if(!profile){
+    document.getElementById('noProfileView').style.display = 'block';
+    document.getElementById('dispatchView').style.display = 'none';
+    return; // stop here — nothing else on this page can run without a profile
+  }
+  document.getElementById('recruitLine').textContent = `DET. ${profile.name.toUpperCase()} · BADGE #${profile.badge}`;
+
+  // ---------------- evidence reference panel ----------------
+  const REF_ITEMS = [
+    { id:'key', tag:'EXHIBIT A', label:'Card' },
+    { id:'ledger', tag:'ITEM 1', label:'Letter' },
+    { id:'radio', tag:'ITEM 2', label:'Radio' }
+  ];
+  const caseData = getCase();
+  const refTabsEl = document.getElementById('refTabs');
+  const refPanesEl = document.getElementById('refPanes');
+  let refActive = null;
+
+  REF_ITEMS.forEach(item=>{
+    const booked = !!caseData[item.id];
+    const tab = document.createElement('div');
+    tab.className = 'ref-tab' + (booked ? '' : ' locked');
+    tab.textContent = item.label;
+    tab.dataset.id = item.id;
+    if(booked){
+      tab.addEventListener('click', ()=> setRefActive(item.id));
+      if(refActive === null) refActive = item.id;
+    }
+    refTabsEl.appendChild(tab);
+
+    const pane = document.createElement('div');
+    pane.className = 'ref-pane';
+    pane.dataset.id = item.id;
+    pane.innerHTML = refPaneContent(item.id, booked, caseData);
+    refPanesEl.appendChild(pane);
+  });
+
+  function setRefActive(id){
+    refActive = id;
+    document.querySelectorAll('.ref-tab').forEach(t=> t.classList.toggle('active', t.dataset.id===id));
+    document.querySelectorAll('.ref-pane').forEach(p=> p.classList.toggle('active', p.dataset.id===id));
+  }
+  if(refActive) setRefActive(refActive);
+
+  function refPaneContent(id, booked, caseData){
+    if(!booked){
+      return `<div class="ref-locked">Not yet recovered — check the case file.</div>`;
+    }
+    if(id === 'key'){
+      return `<div class="ref-card-mini"><div class="rn">BLACKHORSE</div><div class="rp">TEL. (012) 345-6789</div></div>`;
+    }
+    if(id === 'ledger'){
+      return `Letter from V. to Frank — several lines burned. Surviving lines, read in order, spell out a key.`;
+    }
+    if(id === 'radio'){
+      const solved = caseData.radio && caseData.radio.solved;
+      if(!solved) return `<div class="ref-locked">Recording on file — still scrambled. Descramble it in the Case File first.</div>`;
+      return `<span class="ref-transcript">"...where the tracks cut across Delancey, that's the spot. Ten at night, Thursday. Don't be late."</span>`;
+    }
+    return '';
+  }
+
 
   const COLS = 8, ROWS = 6, CELL = 140;
   const W = COLS*CELL, H = ROWS*CELL;

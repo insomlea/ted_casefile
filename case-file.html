@@ -37,6 +37,9 @@
   .topbar .live{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);letter-spacing:1px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite ease-in-out;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+  .breadcrumb{margin-bottom:12px;}
+  .breadcrumb a{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);text-decoration:none;}
+  .breadcrumb a:active{color:var(--green);}
 
   /* ---------- onboarding ---------- */
   #onboard{display:none;}
@@ -106,6 +109,21 @@
     font-size:12.5px; color:var(--muted); border:1px dashed var(--green-faint); line-height:1.7;
   }
   .locked-msg .li{font-size:22px;display:block;margin-bottom:10px;color:var(--green-dim);}
+
+  .case-row{
+    display:flex;align-items:center;gap:10px;background:var(--panel-2);
+    border:1px solid var(--line);padding:12px 14px;margin-bottom:8px;
+  }
+  .case-row-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:1px;white-space:nowrap;}
+  .case-row-title{flex:1;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--paper);}
+  .case-row-status{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--green);border:1px solid var(--green-faint);padding:3px 7px;}
+
+  .dispatch-link-btn{
+    display:block;text-align:center;background:var(--green-faint);border:1px solid var(--green);
+    color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;
+    padding:15px 0;text-decoration:none;margin-top:4px;
+  }
+  .dispatch-link-btn:active{background:var(--green-dim);}
 
   /* ---------- evidence card (shared across panes) ---------- */
   .card{background:var(--panel);border:1px solid var(--line);padding:16px 16px 14px;margin-bottom:14px;position:relative;}
@@ -220,6 +238,7 @@
     <div class="sys">PRECINCT EVIDENCE SYS · v2.1</div>
     <div class="live"><span class="dot"></span>ONLINE</div>
   </div>
+  <div class="breadcrumb"><a href="index.html">&#8592; PRECINCT HOME</a></div>
 
   <!-- ===================== ONBOARDING ===================== -->
   <div id="onboard">
@@ -262,6 +281,9 @@
     { id:'radio', tag:'ITEM 2 OF 3', label:'Radio', locked:false }
     // add { id:'map', tag:'ITEM 3 OF 3', label:'Map' } here once built
   ];
+  const CASES = {
+    '4471': { title:'Marchetti Investigation', status:'OPEN' }
+  };
   const TARGET_CODE = [4,7,2,8];
   const RADIO_MESSAGE = '"...where the tracks cut across Delancey, that\'s the spot. Ten at night, Thursday. Don\'t be late."';
 
@@ -307,7 +329,7 @@
     const name = document.getElementById('recruitName').value.trim();
     if(!name) return;
     const badge = Math.floor(1000 + Math.random()*9000);
-    saveProfile({ name, badge, created: Date.now() });
+    saveProfile({ name, badge, created: Date.now(), cases: ['4471'] });
     if(scannedItem) bookItem(scannedItem);
     renderCaseFile(scannedItem);
     showCaseFile();
@@ -348,6 +370,14 @@
     // tabs
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = '';
+
+    const profileTab = document.createElement('div');
+    profileTab.className = 'tab booked';
+    profileTab.innerHTML = `<span class="t1">RECRUIT</span>Profile`;
+    profileTab.dataset.id = 'profile';
+    profileTab.addEventListener('click', ()=> setActive('profile'));
+    tabsEl.appendChild(profileTab);
+
     ITEMS.forEach(item=>{
       const booked = !!caseData[item.id];
       const tab = document.createElement('div');
@@ -360,12 +390,19 @@
       tabsEl.appendChild(tab);
     });
 
+    const dispatchTab = document.createElement('div');
+    dispatchTab.className = 'tab booked dispatch-tab';
+    dispatchTab.innerHTML = `<span class="t1">TERMINAL</span>Dispatch`;
+    dispatchTab.dataset.id = 'dispatch';
+    dispatchTab.addEventListener('click', ()=> setActive('dispatch'));
+    tabsEl.appendChild(dispatchTab);
+
     // decide active tab
     if(freshlyScanned && caseData[freshlyScanned]){
       activeId = freshlyScanned;
-    } else if(!activeId || !caseData[activeId]){
+    } else if(!activeId || (!caseData[activeId] && activeId !== 'profile' && activeId !== 'dispatch')){
       const firstBooked = ITEMS.find(it => caseData[it.id]);
-      activeId = firstBooked ? firstBooked.id : null;
+      activeId = firstBooked ? firstBooked.id : 'profile';
     }
 
     renderPanes(caseData);
@@ -391,6 +428,13 @@
   function renderPanes(caseData){
     const wrap = document.getElementById('panewrap');
     wrap.innerHTML = '';
+
+    const profilePane = document.createElement('div');
+    profilePane.className = 'pane' + (activeId==='profile' ? ' active' : '');
+    profilePane.dataset.id = 'profile';
+    profilePane.innerHTML = profilePaneContent(caseData);
+    wrap.appendChild(profilePane);
+
     ITEMS.forEach(item=>{
       const pane = document.createElement('div');
       pane.className = 'pane' + (item.id===activeId ? ' active' : '');
@@ -402,10 +446,50 @@
       }
       wrap.appendChild(pane);
     });
+
+    const dispatchPane = document.createElement('div');
+    dispatchPane.className = 'pane' + (activeId==='dispatch' ? ' active' : '');
+    dispatchPane.dataset.id = 'dispatch';
+    dispatchPane.innerHTML = dispatchPaneContent();
+    wrap.appendChild(dispatchPane);
+
     // wire up interactive bits for booked panes
     ITEMS.forEach(item=>{
       if(caseData[item.id]) wireUpPane(item.id);
     });
+  }
+
+  function profilePaneContent(caseData){
+    const profile = getProfile();
+    const joined = new Date(profile.created).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+    const bookedCount = ITEMS.filter(it => caseData[it.id]).length;
+    const casesList = (profile.cases || ['4471']).map(cid=>{
+      const c = CASES[cid] || { title:'Unknown Case', status:'—' };
+      return `
+        <div class="case-row">
+          <div class="case-row-num">CASE #${cid}</div>
+          <div class="case-row-title">${c.title}</div>
+          <div class="case-row-status">${c.status}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="card">
+        <div class="field"><div class="label">NAME</div><div class="value">Det. ${profile.name}</div></div>
+        <div class="field"><div class="label">BADGE NUMBER</div><div class="value">#${profile.badge}</div></div>
+        <div class="field"><div class="label">JOINED</div><div class="value">${joined}</div></div>
+        <div class="field"><div class="label">EVIDENCE LOGGED, CASE #4471</div><div class="value">${bookedCount} of ${ITEMS.length}</div></div>
+      </div>
+      <div class="ptitle" style="margin-top:4px;">CASES WORKED</div>
+      ${casesList}`;
+  }
+
+  function dispatchPaneContent(){
+    return `
+      <div class="card">
+        <div class="field"><div class="label">STATUS</div><div class="value">Location and meet time recovered from intercepted transmission.</div></div>
+        <div class="field"><div class="label">DISPATCH NOTE</div><div class="value note">"Cross-reference the case evidence tabs against the tactical grid before dispatching units — a wrong call sends officers in blind."</div></div>
+      </div>
+      <a href="dispatch.html" class="dispatch-link-btn">OPEN DISPATCH TERMINAL &#8594;</a>`;
   }
 
   function paneContent(id){
@@ -487,8 +571,8 @@
   function wireUpPane(id){
     if(id === 'radio'){
       initRadio();
-      // scope only needs to run while its pane is actually visible/active
-      if(id === activeId) startRadioScope();
+      // scope only needs to run while its pane is actually visible/active, and only if unsolved
+      if(id === activeId && !unlocked) startRadioScope();
     }
   }
 
@@ -514,6 +598,16 @@
     wheelsEl.querySelectorAll('button.down').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),-1)));
     document.getElementById('tryBtn').addEventListener('click', attemptDescramble);
     window.addEventListener('resize', resizeScopeCanvas);
+
+    const c = getCase();
+    if(c.radio && c.radio.solved){
+      unlocked = true;
+      clarityLevel = 1;
+      TARGET_CODE.forEach((d,i)=>{ digits[i] = d; document.getElementById('digit-'+i).textContent = d; });
+      document.getElementById('tryBtn').disabled = true;
+      document.getElementById('radioResult').classList.add('show');
+      document.getElementById('transcript').textContent = RADIO_MESSAGE;
+    }
   }
 
   function changeDigit(i, dir){
@@ -554,6 +648,8 @@
     setTimeout(()=>{ scopeRunning = false; }, 900);
     document.getElementById('radioResult').classList.add('show');
     typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
+    const c = getCase();
+    if(c.radio){ c.radio.solved = true; saveCase(c); }
   }
 
   function typewriter(text, el){
