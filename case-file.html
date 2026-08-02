@@ -262,7 +262,7 @@
     color:var(--red);min-height:16px;opacity:0;transition:opacity .2s;
   }
   .fail-msg.show{opacity:1;}
-  .result{margin-top:16px;border-top:1px dashed var(--green-faint);padding-top:16px;display:none;}
+  .result{margin-top:16px;border-top:1px dashed var(--green-faint);padding-top:16px;display:none;scroll-margin-top:96px;}
   .result.show{display:block;}
   .result .stamp{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--green);border:1px solid var(--green);display:inline-block;padding:4px 10px;margin-bottom:12px;}
   .result .transcript{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.7;color:#eafff2;}
@@ -802,6 +802,9 @@
     typewriter(RADIO_MESSAGE, document.getElementById('transcript'));
     const c = getCase();
     if(c.radio){ c.radio.solved = true; saveCase(c); }
+    setTimeout(()=>{
+      document.getElementById('radioResult').scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 100);
   }
 
   function typewriter(text, el){
