@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Precinct Terminal — Case #4471</title>
+<title>Precinct 24 — Case #4471</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <style>
@@ -330,14 +330,14 @@
 <div class="device">
 
   <div class="topbar">
-    <div class="sys">PRECINCT TERMINAL · v2.2</div>
+    <div class="sys">PRECINCT 24 · v2.2</div>
     <div class="live"><span class="dot"></span>ONLINE</div>
   </div>
 
   <!-- ===================== ONBOARDING ===================== -->
   <div id="onboard">
     <div class="onb-title">NEW RECRUIT INTAKE</div>
-    <div class="onb-sub">DISTRICT 9 PRECINCT</div>
+    <div class="onb-sub">ASHBURN CITY PRECINCT 24</div>
     <div class="onb-card">
       <div class="onb-label">ENTER YOUR NAME TO OPEN YOUR TERMINAL</div>
       <input type="text" id="recruitName" class="onb-input" placeholder="e.g. J. Alvarez" maxlength="24">
@@ -389,7 +389,7 @@
       <!-- ---------- DISPATCH SCREEN ---------- -->
       <div class="screen" id="screen-dispatch">
         <div id="dispatchFormView">
-          <div class="map-title">TACTICAL GRID — DISTRICT 9</div>
+          <div class="map-title">TACTICAL GRID — PRECINCT 24</div>
           <div class="map-frame" id="mapFrame"></div>
 
           <div class="form-row">
@@ -1079,6 +1079,8 @@
     if(changed) saveCase(c);
   }
   if(params.get('demo') === '1'){
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(CASE_KEY);
     seedDemoData();
   }
 
