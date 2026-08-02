@@ -464,13 +464,13 @@
 (function(){
   // ---------------- config ----------------
   const ITEMS = [
-    { id:'key', tag:'EXHIBIT A', label:'Business Card', locked:false },
-    { id:'ledger', tag:'ITEM 1 OF 3', label:'Letter', locked:false },
-    { id:'radio', tag:'ITEM 2 OF 3', label:'Radio', locked:false }
+    { id:'key', tag:'ITEM 1 OF 3', label:'Business Card', locked:false },
+    { id:'ledger', tag:'ITEM 2 OF 3', label:'Letter', locked:false },
+    { id:'radio', tag:'ITEM 3 OF 3', label:'Radio', locked:false }
     // add { id:'map', tag:'ITEM 3 OF 3', label:'Map' } here once built
   ];
   const CASES = { '4471': { title:'Marchetti Investigation' } };
-  const TARGET_CODE = [4,7,2,8];
+  const TARGET_CODE = [3,2,8,5];
   const RADIO_MESSAGE = '"...where the tracks cut across Delancey, that\'s the spot. Ten at night, Thursday. Don\'t be late."';
   const TARGET_COORD = 'D5';
   const TARGET_DAY = 'Thursday';
@@ -675,15 +675,15 @@
           <div class="letter-wrap">
             <div class="letter">
               <div class="lsalut">Frank —</div>
-              <div class="lline">Keep this quiet, no exceptions.</div>
+              <div class="lline">Count the take before you say a word.</div>
               <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline">Run the count again before the meet.</div>
               <div class="lline burnt"><span class="smear"></span></div>
               <div class="lline">Answer for what happened at the dock.</div>
               <div class="lline burnt"><span class="smear"></span></div>
-              <div class="lline burnt"><span class="smear"></span></div>
               <div class="lline">Straighten this out before I have to.</div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline burnt"><span class="smear"></span></div>
+              <div class="lline">Have it ready when Sal comes calling.</div>
               <div class="lline burnt"><span class="smear"></span></div>
               <div class="lsign">— V.</div>
             </div>
@@ -732,19 +732,20 @@
   let audioCtx, noiseSource, filterNode, gainNode, audioStarted=false;
 
   function initRadio(){
-    if(radioInit) return;
-    radioInit = true;
     const wheelsEl = document.getElementById('wheels');
     TARGET_CODE.forEach((_, i)=>{
       const wheel = document.createElement('div');
       wheel.className = 'wheel';
-      wheel.innerHTML = `<button class="up" data-i="${i}">&#9650;</button><div class="digit" id="digit-${i}">0</div><button class="down" data-i="${i}">&#9660;</button>`;
+      wheel.innerHTML = `<button class="up" data-i="${i}">&#9650;</button><div class="digit" id="digit-${i}">${digits[i]}</div><button class="down" data-i="${i}">&#9660;</button>`;
       wheelsEl.appendChild(wheel);
     });
     wheelsEl.querySelectorAll('button.up').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),1)));
     wheelsEl.querySelectorAll('button.down').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),-1)));
     document.getElementById('tryBtn').addEventListener('click', attemptDescramble);
-    window.addEventListener('resize', resizeScopeCanvas);
+    if(!radioInit){
+      radioInit = true;
+      window.addEventListener('resize', resizeScopeCanvas);
+    }
 
     const c = getCase();
     if(c.radio && c.radio.solved){
