@@ -733,6 +733,8 @@
 
   function initRadio(){
     const wheelsEl = document.getElementById('wheels');
+    if(!wheelsEl) return; // pane not in the DOM right now — nothing to build
+    wheelsEl.innerHTML = ''; // always rebuild clean, never append onto stale/duplicate nodes
     TARGET_CODE.forEach((_, i)=>{
       const wheel = document.createElement('div');
       wheel.className = 'wheel';
@@ -741,7 +743,8 @@
     });
     wheelsEl.querySelectorAll('button.up').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),1)));
     wheelsEl.querySelectorAll('button.down').forEach(btn=> btn.addEventListener('click', ()=>changeDigit(parseInt(btn.dataset.i),-1)));
-    document.getElementById('tryBtn').addEventListener('click', attemptDescramble);
+    const tryBtnEl = document.getElementById('tryBtn');
+    if(tryBtnEl) tryBtnEl.addEventListener('click', attemptDescramble);
     if(!radioInit){
       radioInit = true;
       window.addEventListener('resize', resizeScopeCanvas);
@@ -751,7 +754,7 @@
     if(c.radio && c.radio.solved){
       unlocked = true; clarityLevel = 1;
       TARGET_CODE.forEach((d,i)=>{ digits[i] = d; document.getElementById('digit-'+i).textContent = d; });
-      document.getElementById('tryBtn').disabled = true;
+      if(tryBtnEl) tryBtnEl.disabled = true;
       document.getElementById('radioResult').classList.add('show');
       document.getElementById('transcript').textContent = RADIO_MESSAGE;
     }
@@ -1053,11 +1056,17 @@
   // Embed with ?demo=1 to pre-load a profile and all evidence, skipping onboarding
   // and NFC scanning — useful for letting people try the app on a website.
   function seedDemoData(){
-    if(getProfile()) return; // never overwrite a real visitor's progress
-    saveProfile({ name:'Demo Recruit', badge:4471, created:Date.now(), closedCases:[], firstTryCloses:[], visits:0, dispatchFails:0 });
-    const c = {};
-    ITEMS.forEach(it=>{ c[it.id] = { bookedAt: Date.now() }; });
-    saveCase(c);
+    let p = getProfile();
+    if(!p){
+      p = { name:'Demo Recruit', badge:4471, created:Date.now(), closedCases:[], firstTryCloses:[], visits:0, dispatchFails:0 };
+      saveProfile(p);
+    }
+    const c = getCase();
+    let changed = false;
+    ITEMS.forEach(it=>{
+      if(!c[it.id]){ c[it.id] = { bookedAt: Date.now() }; changed = true; }
+    });
+    if(changed) saveCase(c);
   }
   if(params.get('demo') === '1'){
     seedDemoData();
